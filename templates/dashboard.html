@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row vh-100">
+  <!-- Sidebar -->
+  <div class="col-2 bg-dark p-4">
+    <h4 class="text-center mb-4">Student Manager</h4>
+    <p class="text-light bg-dark">Student Operations</h5>
+    <button class="btn btn-success w-100 mb-2">+ Add Student</button>
+    <button class="btn btn-warning w-100 mb-2">✏ Update Student</button>
+    <button class="btn btn-danger w-100 mb-4">🗑 Delete Student</button>
+
+    <p class="text-light bg-dark">Academic Setup</h6>
+    <button class="btn btn-success w-100 mb-2">🏛 Manage College</button>
+    <button class="btn btn-success w-100 mb-2">📚 Manage Program</button>
+
+    <div class="card text-center mt-4 card-custom">
+      <div class="card-body">
+        <h5>100</h5>
+        <small>Total Students</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="col-10 bg-gradient p-4">
+    <h2 class="fw-bold mb-4">Student Database</h2>
+
+    <!-- Search + Filter -->
+    <div class="d-flex mb-3">
+      <input type="text" class="form-control me-2" placeholder="Search">
+      <select class="form-select me-2">
+        <option>Filter By</option>
+      </select>
+      <select class="form-select">
+        <option>Sort By</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <table class="table table-dark table-striped">
+      <thead>
+        <tr>
+          <th>Student ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Gender</th>
+          <th>Year Level</th>
+          <th>Course</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2021-2023</td>
+          <td>Anya</td>
+          <td>Monta</td>
+          <td>Female</td>
+          <td>3rd Year</td>
+          <td>BSCA</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="d-flex mt-2" style="margin-left: 55%;">
+  <ul class="pagination">
+    <li class="page-item disabled">
+      <a class="page-link" href="#" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+    <li class="page-item"><a class="page-link" href="#">2</a></li>
+    <li class="page-item">
+      <a class="page-link" href="#" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %}
