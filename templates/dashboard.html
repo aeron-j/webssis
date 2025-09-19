@@ -7,8 +7,8 @@
   <div class="col-2 bg-dark p-4">
     <h4 class="text-center mb-4">Student Manager</h4>
     <p class="text-light bg-dark">Student Operations</h5>
-    <button class="btn btn-success w-100 mb-2">+ Add Student</button>
-    <button class="btn btn-warning w-100 mb-2">✏ Update Student</button>
+    <a href="{{ url_for('add_student') }}" class="btn btn-success w-100 mb-2">+ Add Student</a>
+    <a href="{{ url_for('update_student') }}" class="btn btn-warning w-100 mb-2">✏ Update Student</a>
     <button class="btn btn-danger w-100 mb-4">🗑 Delete Student</button>
 
     <p class="text-light bg-dark">Academic Setup</h6>

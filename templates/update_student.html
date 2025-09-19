@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Add Student{% endblock %}
+{% block title %}Update Student{% endblock %}
 
 {% block content %}
 <div class="row vh-100">
@@ -9,7 +9,7 @@
 
     <p class="text-light">Student Operations</p>
     <a href="{{ url_for('add_student') }}" class="btn btn-success w-100 mb-2">+ Add Student</a>
-    <button class="btn btn-warning w-100 mb-2">✏ Update Student</button>
+    <a href="{{ url_for('update_student') }}" class="btn btn-warning w-100 mb-2">✏ Update Student</a>
     <button class="btn btn-danger w-100 mb-4">🗑 Delete Student</button>
 
     <p class="text-light">Academic Setup</p>
@@ -21,7 +21,7 @@
 
   <!-- Main content -->
   <div class="col-10 p-4">
-    <h2 class="fw-bold mb-4">Add Student</h2>
+    <h2 class="fw-bold mb-4">Update Student</h2>
 
     <!-- Frame for form -->
     <div class="card shadow-lg p-4">
@@ -87,9 +87,9 @@
         </div>
       </div>
 
-      <!-- Add Student button -->
+      <!-- Update Student button -->
       <div class="text-end mt-4">
-        <button type="submit" class="btn btn-success">+ Add Student</button>
+        <button type="submit" class="btn btn-warning">✏ Update Student</button>
       </div>
     </div>
   </div>
