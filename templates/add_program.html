@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Add Program{% endblock %}
+
+{% block content %}
+<div class="row vh-100">
+  <!-- Sidebar -->
+  <div class="col-2 bg-dark p-4">
+    <h4 class="text-center mb-4">Program Manager</h4>
+
+    <p class="text-light bg-dark">Program Operations</p>
+    <a href="{{ url_for('add_program') }}" class="btn btn-success w-100 mb-2">+ Add Program</a>
+    <a href="{{ url_for('update_program') }}" class="btn btn-warning w-100 mb-2">✏ Update Program</a>
+    <button class="btn btn-danger w-100 mb-4">🗑 Delete Program</button>
+
+    <p class="text-light bg-dark">Academic Setup</p>
+    <a href="{{ url_for('manage_college') }}" class="btn btn-success w-100 mb-2">🏛 Manage College</a>
+    <a href="{{ url_for('manage_program') }}" class="btn btn-success w-100 mb-2">📚 Manage Program</a>
+
+    <div class="card text-center mt-4 card-custom">
+      <div class="card-body">
+        <h5>{{ total_program if total_program is defined else 3 }}</h5>
+        <small>Total Programs</small>
+      </div>
+    </div>
+
+    <!-- Return to Manage Program -->
+    <a href="{{ url_for('manage_program') }}" class="btn btn-secondary w-100 mt-4">← Return to Manage Program</a>
+  </div>
+
+  <!-- Main content -->
+  <div class="col-10 bg-gradient p-4">
+    <h2 class="fw-bold mb-4">Add Program</h2>
+
+    <!-- Form Frame -->
+    <div class="card p-4 bg-dark text-light">
+      <h5>Program Information</h5>
+      <hr>
+
+      <form method="POST">
+        <div class="mb-3">
+          <label for="program_code" class="form-label">Program Code</label>
+          <input type="text" class="form-control" id="program_code" name="program_code" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="program_name" class="form-label">Program Name</label>
+          <input type="text" class="form-control" id="program_name" name="program_name" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="college" class="form-label">College</label>
+          <input type="text" class="form-control" id="college" name="college" required>
+        </div>
+
+        <div class="text-end">
+          <button type="submit" class="btn btn-success">+ Add Program</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

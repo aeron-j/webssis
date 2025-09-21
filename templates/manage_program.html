@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Manage Program{% endblock %}
+
+{% block content %}
+<div class="row vh-100">
+  <!-- Sidebar -->
+  <div class="col-2 bg-dark p-4">
+    <h4 class="text-center mb-4">Program Manager</h4>
+
+    <p class="text-light bg-dark">Program Operations</p>
+    <a href="{{ url_for('add_program') }}" class="btn btn-success w-100 mb-2">+ Add Program</a>
+    <a href="{{ url_for('update_program') }}" class="btn btn-warning w-100 mb-2">✏ Update Program</a>
+    <button class="btn btn-danger w-100 mb-4">🗑 Delete Program</button>
+
+    <p class="text-light bg-dark">Academic Setup</p>
+    <a href="{{ url_for('manage_college') }}" class="btn btn-success w-100 mb-2">🏛 Manage College</a>
+    <a href="{{ url_for('manage_program') }}" class="btn btn-success w-100 mb-2">📚 Manage Program</a>
+
+    <div class="card text-center mt-4 card-custom">
+      <div class="card-body">
+        <h5>{{ total_program if total_program is defined else 10 }}</h5>
+        <small>Total Programs</small>
+      </div>
+    </div>
+
+    <!-- Return to Dashboard -->
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary w-100 mt-4">← Return to Dashboard</a>
+  </div>
+
+  <!-- Main content -->
+  <div class="col-10 bg-gradient p-4">
+    <h2 class="fw-bold mb-4">Manage Program</h2>
+
+    <!-- Search and Sort Controls -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <!-- Search filter -->
+      <input type="text" class="form-control w-50" placeholder="🔍 Search Program...">
+
+      <!-- Sort By -->
+      <select class="form-select w-25">
+        <option selected disabled>Sort By</option>
+        <option value="code">Program Code</option>
+        <option value="name">Program</option>
+        <option value="college">College</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <table class="table table-dark table-striped">
+      <thead>
+        <tr>
+          <th>Program Code</th>
+          <th>Program</th>
+          <th>College</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if programs %}
+          {% for program in programs %}
+          <tr>
+            <td>{{ program.code }}</td>
+            <td>{{ program.name }}</td>
+            <td>{{ program.college }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td>BSCS</td>
+            <td>Bachelor of Science in Computer Science</td>
+            <td>CIT</td>
+          </tr>
+          <tr>
+            <td>BSA</td>
+            <td>Bachelor of Science in Accountancy</td>
+            <td>CAS</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

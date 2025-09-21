@@ -58,3 +58,37 @@ def update_college():
         print("Updated:", college_code, college_name)
         return redirect(url_for("manage_college"))
     return render_template("update_college.html")
+
+@app.route("/manage_program")
+def manage_program():
+    # Later this will fetch data from your database (programs table)
+    programs = [
+        {"code": "BSIT", "name": "Bachelor of Science in Information Technology", "college": "CIT"},
+        {"code": "BSBIO", "name": "Bachelor of Science in Biology", "college": "CAS"}
+    ]
+    total_program = len(programs)
+
+    return render_template("manage_program.html", programs=programs, total_program=total_program)
+
+@app.route("/add_program", methods=["GET", "POST"])
+def add_program():
+    if request.method == "POST":
+        program_code = request.form["program_code"]
+        program_name = request.form["program_name"]
+        program_college = request.form["program_college"]
+        # TODO: Save to database
+        print(program_code, program_name, program_college)
+        return redirect(url_for("manage_program"))
+    return render_template("add_program.html")
+
+@app.route("/update_program", methods=["GET", "POST"])
+def update_program():
+    if request.method == "POST":
+        program_code = request.form["program_code"]
+        program_name = request.form["program_name"]
+        program_college = request.form["program_college"]
+        # TODO: Update database here
+        print("Updated:", program_code, program_name, program_college)
+        return redirect(url_for("manage_program"))
+    return render_template("update_program.html")
+
