@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
+app.secret_key = "secret_key_here"
 
-@app.route("/")
-def dashboard():
-    return render_template("dashboard.html")
+@app.route("/manage_student")
+def manage_student():
+    if "user" not in session:
+        return redirect(url_for("login"))
+    return render_template("manage_student.html")
 
 @app.route("/add_student", methods=["GET", "POST"])
 def add_student():
@@ -15,7 +18,7 @@ def add_student():
         course = request.form["course"]
         # TODO: Save to database here
         print(student_id, first_name, last_name, course)
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("manage_student"))
     return render_template("add_student.html")
 
 @app.route("/update_student", methods=["GET", "POST"])
@@ -27,7 +30,7 @@ def update_student():
         last_name = request.form["last_name"]
         course = request.form["course"]
         print("Updating:", student_id, first_name, last_name, course)
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("manage_student"))
     return render_template("update_student.html")
 
 @app.route("/manage_college")
@@ -91,4 +94,30 @@ def update_program():
         print("Updated:", program_code, program_name, program_college)
         return redirect(url_for("manage_program"))
     return render_template("update_program.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        # Example simple check
+        if username == "admin" and password == "admin123":
+            session["user"] = username
+            return redirect(url_for("manage_student"))
+        else:
+            return render_template("login.html", error="Invalid credentials")
+    
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect(url_for("login"))
+
+
+@app.route("/")
+def home():
+    return redirect(url_for("login"))
 
