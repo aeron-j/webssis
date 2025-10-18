@@ -6,7 +6,7 @@ const ManageStudent = () => {
   return (
     <div className="row vh-100">
       {/* Sidebar (Reusable Component) */}
-      <Sidebar />
+      <Sidebar type = "student" />
 
       {/* Main Content */}
       <div className="col-10 bg-gradient p-4">
