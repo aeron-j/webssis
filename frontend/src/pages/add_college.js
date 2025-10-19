@@ -1,8 +1,41 @@
-import React from "react";
+import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 
 const AddCollege = () => {
+  const [collegeCode, setCollegeCode] = useState("");
+  const [collegeName, setCollegeName] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const data = {
+      college_code: collegeCode,
+      college_name: collegeName,
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/colleges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        setMessage(result.message);
+        setCollegeCode("");
+        setCollegeName("");
+      } else {
+        setMessage("❌ Failed to add college. Please check backend logs.");
+      }
+    } catch (error) {
+      console.error("Error adding college:", error);
+      setMessage("⚠️ Error: Could not connect to backend.");
+    }
+  };
+
   return (
     <div className="row vh-100">
       {/* Sidebar */}
@@ -17,7 +50,7 @@ const AddCollege = () => {
           <h5>College Information</h5>
           <hr />
 
-          <form>
+          <form onSubmit={handleSubmit}>
             {/* College Code */}
             <div className="mb-3">
               <label htmlFor="collegeCode" className="form-label">
@@ -28,6 +61,8 @@ const AddCollege = () => {
                 className="form-control"
                 id="collegeCode"
                 placeholder="Enter college code"
+                value={collegeCode}
+                onChange={(e) => setCollegeCode(e.target.value)}
                 required
               />
             </div>
@@ -42,6 +77,8 @@ const AddCollege = () => {
                 className="form-control"
                 id="collegeName"
                 placeholder="Enter college name"
+                value={collegeName}
+                onChange={(e) => setCollegeName(e.target.value)}
                 required
               />
             </div>
@@ -53,6 +90,11 @@ const AddCollege = () => {
               </button>
             </div>
           </form>
+
+          {/* Feedback Message */}
+          {message && (
+            <div className="alert alert-info mt-3 text-center">{message}</div>
+          )}
         </div>
       </div>
     </div>
