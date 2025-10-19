@@ -6,7 +6,7 @@ const UpdateProgram = () => {
   return (
     <div className="row vh-100">
       {/* Sidebar */}
-      <Sidebar type = "program" />
+      <Sidebar type="program" />
 
       {/* Main content */}
       <div className="col-10 bg-gradient p-4">
@@ -48,13 +48,13 @@ const UpdateProgram = () => {
               <label htmlFor="college" className="form-label">
                 College
               </label>
-              <input
-                type="text"
-                className="form-control"
-                id="college"
-                name="college"
-                required
-              />
+              <select className="form-select" id="college" name="college" required>
+                <option value="">Select College</option>
+                <option value="CIT">CIT - College of Information Technology</option>
+                <option value="CAS">CAS - College of Arts and Sciences</option>
+                <option value="COE">COE - College of Engineering</option>
+                <option value="CBA">CBA - College of Business Administration</option>
+              </select>
             </div>
 
             <div className="text-end">
