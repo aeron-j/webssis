@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const Sidebar = ({ type }) => {
+const Sidebar = ({ type, onDelete }) => {
   const renderLinks = () => {
     if (type === "student") {
       return (
@@ -14,7 +14,14 @@ const Sidebar = ({ type }) => {
           <Link to="/update-student" className="btn btn-warning w-100 mb-2">
             ✏ Update Student
           </Link>
-          <button className="btn btn-danger w-100 mb-4">🗑 Delete Student</button>
+          <button
+            className="btn btn-danger w-100 mb-4"
+            onClick={() => {
+              if (onDelete) onDelete();
+            }}
+          >
+            🗑 Delete Student
+          </button>
         </>
       );
     } else if (type === "college") {
@@ -27,7 +34,14 @@ const Sidebar = ({ type }) => {
           <Link to="/update-college" className="btn btn-warning w-100 mb-2">
             ✏ Update College
           </Link>
-          <button className="btn btn-danger w-100 mb-4">🗑 Delete College</button>
+          <button
+            className="btn btn-danger w-100 mb-4"
+            onClick={() => {
+              if (onDelete) onDelete();
+            }}
+          >
+            🗑 Delete College
+          </button>
         </>
       );
     } else if (type === "program") {
@@ -40,7 +54,14 @@ const Sidebar = ({ type }) => {
           <Link to="/update-program" className="btn btn-warning w-100 mb-2">
             ✏ Update Program
           </Link>
-          <button className="btn btn-danger w-100 mb-4">🗑 Delete Program</button>
+          <button
+            className="btn btn-danger w-100 mb-4"
+            onClick={() => {
+              if (onDelete) onDelete();
+            }}
+          >
+            🗑 Delete Program
+          </button>
         </>
       );
     }
