@@ -4,21 +4,25 @@ import Sidebar from "../components/sidebar";
 
 const ManageStudent = () => {
   const [students, setStudents] = useState([]);
-  const [programs, setPrograms] = useState([]); // To display program names
+  const [programs, setPrograms] = useState([]); // Programs for course mapping
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
   // Fetch students
-  useEffect(() => {
+  const fetchStudents = () => {
     fetch("http://127.0.0.1:5000/api/students")
       .then((res) => res.json())
       .then((data) => setStudents(data))
       .catch((err) => console.error("Error fetching students:", err));
+  };
+
+  useEffect(() => {
+    fetchStudents();
   }, []);
 
-  // Fetch programs
+  // Fetch programs (for course display)
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/programs")
       .then((res) => res.json())
@@ -26,7 +30,6 @@ const ManageStudent = () => {
       .catch((err) => console.error("Error fetching programs:", err));
   }, []);
 
-  // Get program name from code
   const getProgramName = (code) => {
     const program = programs.find((p) => p.code === code);
     return program ? program.name : code;
@@ -34,6 +37,37 @@ const ManageStudent = () => {
 
   const handleRowClick = (id) => {
     setSelectedStudentId((prev) => (prev === id ? null : id));
+  };
+
+  // 🔹 Delete student (called from Sidebar)
+  const handleDelete = async () => {
+    if (!selectedStudentId) {
+      alert("Please select a student to delete!");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this student?"
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:5000/api/students/${selectedStudentId}`,
+        { method: "DELETE" }
+      );
+
+      if (res.ok) {
+        alert("Student deleted successfully!");
+        setSelectedStudentId(null);
+        fetchStudents(); // Refresh table after deletion
+      } else {
+        alert("Failed to delete student.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("⚠️ Could not connect to backend.");
+    }
   };
 
   const filteredStudents = students
@@ -58,7 +92,8 @@ const ManageStudent = () => {
 
   return (
     <div className="row vh-100">
-      <Sidebar type="student" />
+      {/* Pass handleDelete to Sidebar */}
+      <Sidebar type="student" onDelete={handleDelete} />
 
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Student Database</h2>
@@ -128,7 +163,7 @@ const ManageStudent = () => {
                   <td>{student.last_name}</td>
                   <td>{student.gender}</td>
                   <td>{student.year_level}</td>
-                  <td>{student.course}</td> {/* display program code */}
+                  <td>{student.course}</td>
                 </tr>
               ))
             ) : (
