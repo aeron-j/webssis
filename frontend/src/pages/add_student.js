@@ -1,127 +1,210 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 
 function AddStudent() {
+  const [studentId, setStudentId] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [gender, setGender] = useState("");
+  const [college, setCollege] = useState("");
+  const [program, setProgram] = useState("");
+  const [colleges, setColleges] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [message, setMessage] = useState("");
+
+  // Fetch colleges from backend
+  useEffect(() => {
+    fetch("http://127.0.0.1:5000/api/colleges")
+      .then((res) => res.json())
+      .then((data) => setColleges(data))
+      .catch((err) => console.error("Error fetching colleges:", err));
+  }, []);
+
+  // Fetch programs from backend
+  useEffect(() => {
+    fetch("http://127.0.0.1:5000/api/programs")
+      .then((res) => res.json())
+      .then((data) => setPrograms(data))
+      .catch((err) => console.error("Error fetching programs:", err));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      student_id: studentId,
+      first_name: firstName,
+      last_name: lastName,
+      gender: gender,
+      year_level: "1st Year", // default for now
+      course: program, // store program code
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        setMessage(result.message);
+
+        // Reset form
+        setStudentId("");
+        setFirstName("");
+        setLastName("");
+        setGender("");
+        setCollege("");
+        setProgram("");
+      } else {
+        setMessage("❌ Failed to add student. Check backend logs.");
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("⚠️ Could not connect to backend.");
+    }
+  };
+
   return (
     <div className="row vh-100">
-      {/* Sidebar */}
-      <Sidebar type = "student" />
+      <Sidebar type="student" />
 
-      {/* Main Content */}
       <div className="col-10 p-4 bg-light">
         <h2 className="fw-bold mb-4">Add Student</h2>
 
         <div className="card shadow-lg p-4">
-          {/* Personal Info */}
-          <h5 className="fw-bold">Personal Information</h5>
-          <hr />
+          <form onSubmit={handleSubmit}>
+            {/* Personal Info */}
+            <h5 className="fw-bold">Personal Information</h5>
+            <hr />
 
-          <div className="mb-3">
-            <label htmlFor="studentId" className="form-label">
-              Student ID
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="studentId"
-              placeholder="Enter student ID"
-            />
-          </div>
-
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label htmlFor="firstName" className="form-label">
-                First Name
-              </label>
+            <div className="mb-3">
+              <label className="form-label">Student ID</label>
               <input
                 type="text"
                 className="form-control"
-                id="firstName"
-                placeholder="Enter first name"
+                placeholder="Enter student ID"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
+                required
               />
             </div>
-            <div className="col-md-6">
-              <label htmlFor="lastName" className="form-label">
-                Last Name
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                id="lastName"
-                placeholder="Enter last name"
-              />
-            </div>
-          </div>
 
-          <div className="row mb-4">
-            <div className="col-md-6">
-              <label className="form-label d-block">Gender</label>
-              <div className="form-check form-check-inline">
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <label className="form-label">First Name</label>
                 <input
-                  className="form-check-input"
-                  type="radio"
-                  name="gender"
-                  id="male"
-                  value="male"
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter first name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
                 />
-                <label className="form-check-label" htmlFor="male">
-                  Male
-                </label>
               </div>
-              <div className="form-check form-check-inline">
+              <div className="col-md-6">
+                <label className="form-label">Last Name</label>
                 <input
-                  className="form-check-input"
-                  type="radio"
-                  name="gender"
-                  id="female"
-                  value="female"
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
                 />
-                <label className="form-check-label" htmlFor="female">
-                  Female
-                </label>
               </div>
             </div>
-          </div>
 
-          {/* Academic Info */}
-          <h5 className="fw-bold mt-4">Academic Information</h5>
-          <hr />
-
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label htmlFor="college" className="form-label">
-                College
-              </label>
-              <select id="college" className="form-select">
-                <option selected disabled>
-                  Choose college...
-                </option>
-                <option value="1">College of Engineering</option>
-                <option value="2">College of Arts</option>
-                <option value="3">College of Business</option>
-              </select>
+            <div className="row mb-4">
+              <div className="col-md-6">
+                <label className="form-label d-block">Gender</label>
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name="gender"
+                    value="Male"
+                    checked={gender === "Male"}
+                    onChange={(e) => setGender(e.target.value)}
+                    required
+                  />
+                  <label className="form-check-label">Male</label>
+                </div>
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name="gender"
+                    value="Female"
+                    checked={gender === "Female"}
+                    onChange={(e) => setGender(e.target.value)}
+                  />
+                  <label className="form-check-label">Female</label>
+                </div>
+              </div>
             </div>
-            <div className="col-md-6">
-              <label htmlFor="program" className="form-label">
-                Program
-              </label>
-              <select id="program" className="form-select">
-                <option selected disabled>
-                  Choose program...
-                </option>
-                <option value="1">BS Computer Science</option>
-                <option value="2">BS Information Technology</option>
-                <option value="3">BS Business Administration</option>
-              </select>
-            </div>
-          </div>
 
-          <div className="text-end mt-4">
-            <button type="submit" className="btn btn-success">
-              + Add Student
-            </button>
-          </div>
+            {/* Academic Info */}
+            <h5 className="fw-bold mt-4">Academic Information</h5>
+            <hr />
+
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <label className="form-label">College</label>
+                <select
+                  className="form-select"
+                  value={college}
+                  onChange={(e) => {
+                    setCollege(e.target.value);
+                    setProgram(""); // reset program when college changes
+                  }}
+                  required
+                >
+                  <option value="" disabled>
+                    Choose college...
+                  </option>
+                  {colleges.map((c) => (
+                    <option key={c.college_code} value={c.college_code}>
+                      {c.college_code} - {c.college_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Program</label>
+                <select
+                  className="form-select"
+                  value={program}
+                  onChange={(e) => setProgram(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    Choose program...
+                  </option>
+                  {programs
+                    .filter((p) => p.college === college)
+                    .map((p) => (
+                      <option key={p.code} value={p.code}>
+                        {p.code} - {p.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="text-end mt-4">
+              <button type="submit" className="btn btn-success">
+                + Add Student
+              </button>
+            </div>
+          </form>
+
+          {message && (
+            <div className="alert alert-info mt-3 text-center">{message}</div>
+          )}
         </div>
       </div>
     </div>

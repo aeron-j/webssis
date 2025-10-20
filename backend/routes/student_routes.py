@@ -9,7 +9,7 @@ def get_students():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, student_id, name, program_id
+        SELECT id, student_id, first_name, last_name, gender, year_level, course
         FROM students
         ORDER BY id ASC;
     """)
@@ -22,8 +22,11 @@ def get_students():
         result.append({
             "id": s[0],
             "student_id": s[1],
-            "name": s[2],
-            "program_id": s[3]
+            "first_name": s[2],
+            "last_name": s[3],
+            "gender": s[4],
+            "year_level": s[5],
+            "course": s[6],
         })
     return jsonify(result)
 
@@ -32,19 +35,19 @@ def get_students():
 def add_student():
     data = request.get_json()
     student_id = data.get("student_id")
-    name = data.get("name")
-    program_id = data.get("program_id")
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+    gender = data.get("gender")
+    year_level = data.get("year_level")
+    course = data.get("course")
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT INTO students (student_id, name, program_id)
-        VALUES (%s, %s, %s)
+    cur.execute("""
+        INSERT INTO students (student_id, first_name, last_name, gender, year_level, course)
+        VALUES (%s, %s, %s, %s, %s, %s)
         RETURNING id;
-        """,
-        (student_id, name, program_id),
-    )
+    """, (student_id, first_name, last_name, gender, year_level, course))
     new_id = cur.fetchone()[0]
     conn.commit()
     cur.close()
@@ -57,19 +60,19 @@ def add_student():
 def update_student(id):
     data = request.get_json()
     student_id = data.get("student_id")
-    name = data.get("name")
-    program_id = data.get("program_id")
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+    gender = data.get("gender")
+    year_level = data.get("year_level")
+    course = data.get("course")
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(
-        """
+    cur.execute("""
         UPDATE students
-        SET student_id = %s, name = %s, program_id = %s
+        SET student_id = %s, first_name = %s, last_name = %s, gender = %s, year_level = %s, course = %s
         WHERE id = %s;
-        """,
-        (student_id, name, program_id, id),
-    )
+    """, (student_id, first_name, last_name, gender, year_level, course, id))
     conn.commit()
     cur.close()
     conn.close()
