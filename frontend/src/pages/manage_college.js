@@ -5,7 +5,7 @@ import Sidebar from "../components/sidebar";
 const ManageCollege = () => {
   const [colleges, setColleges] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  const [sortBy, setSortBy] = useState(""); // start with empty value
   const [selectedCollegeCode, setSelectedCollegeCode] = useState(null);
 
   useEffect(() => {
@@ -32,7 +32,6 @@ const ManageCollege = () => {
       return 0;
     });
 
-  // Highlight row and store selected college in localStorage
   const handleRowClick = (college) => {
     setSelectedCollegeCode((prev) =>
       prev === college.college_code ? null : college.college_code
@@ -40,7 +39,6 @@ const ManageCollege = () => {
     localStorage.setItem("selectedCollege", JSON.stringify(college));
   };
 
-  // Delete triggered by Sidebar button
   const handleDelete = async () => {
     if (!selectedCollegeCode) {
       alert("Please select a college first!");
@@ -95,7 +93,12 @@ const ManageCollege = () => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="">Sort By</option>
+            {/* Show "Sort By" as visible placeholder */}
+            {sortBy === "" && (
+              <option value="" disabled hidden>
+                Sort By
+              </option>
+            )}
             <option value="code">College Code</option>
             <option value="name">College Name</option>
           </select>
