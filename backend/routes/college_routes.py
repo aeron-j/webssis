@@ -12,11 +12,7 @@ def get_colleges():
     colleges = cur.fetchall()
     cur.close()
     conn.close()
-
-    # Match frontend keys: college_code, college_name
-    return jsonify([
-        {"college_code": row[0], "college_name": row[1]} for row in colleges
-    ])
+    return jsonify([{"college_code": row[0], "college_name": row[1]} for row in colleges])
 
 # ✅ Add a new college
 @college_bp.route("/colleges", methods=["POST"])
@@ -34,10 +30,9 @@ def add_college():
     conn.commit()
     cur.close()
     conn.close()
-
     return jsonify({"message": "College added successfully!"}), 201
 
-# ✅ Update college (corrected to update code and name)
+# ✅ Update college (propagate code changes to programs)
 @college_bp.route("/colleges/<college_code>", methods=["PUT"])
 def update_college(college_code):
     data = request.get_json()
@@ -47,9 +42,15 @@ def update_college(college_code):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        # Update college table
         cur.execute(
             "UPDATE colleges SET college_code = %s, college_name = %s WHERE college_code = %s",
             (new_code, college_name, college_code)
+        )
+        # 🔹 Update programs linked to this college
+        cur.execute(
+            "UPDATE programs SET college = %s WHERE college = %s",
+            (new_code, college_code)
         )
         conn.commit()
     except Exception as e:
@@ -60,7 +61,7 @@ def update_college(college_code):
 
     cur.close()
     conn.close()
-    return jsonify({"message": "College updated successfully!"})
+    return jsonify({"message": f"✏ College '{college_code}' updated successfully"})
 
 # ✅ Delete college
 @college_bp.route("/colleges/<college_code>", methods=["DELETE"])
@@ -71,5 +72,4 @@ def delete_college(college_code):
     conn.commit()
     cur.close()
     conn.close()
-
     return jsonify({"message": "College deleted successfully!"})

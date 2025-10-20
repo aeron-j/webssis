@@ -12,7 +12,6 @@ def get_programs():
     rows = cur.fetchall()
     cur.close()
     conn.close()
-
     programs = [{"code": r[0], "name": r[1], "college": r[2]} for r in rows]
     return jsonify(programs)
 
@@ -33,26 +32,25 @@ def add_program():
     conn.commit()
     cur.close()
     conn.close()
-
     return jsonify({"message": "✅ Program added successfully"})
 
-# 🔹 Update program
+# 🔹 Update program (including program_code edit)
 @program_bp.route("/programs/<program_code>", methods=["PUT"])
 def update_program(program_code):
     data = request.get_json()
+    new_code = data.get("program_code")
     program_name = data.get("program_name")
     college = data.get("college")
 
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
-        "UPDATE programs SET program_name = %s, college = %s WHERE program_code = %s",
-        (program_name, college, program_code),
+        "UPDATE programs SET program_code = %s, program_name = %s, college = %s WHERE program_code = %s",
+        (new_code, program_name, college, program_code),
     )
     conn.commit()
     cur.close()
     conn.close()
-
     return jsonify({"message": f"✏ Program '{program_code}' updated successfully"})
 
 # 🔹 Delete program
@@ -64,5 +62,4 @@ def delete_program(program_code):
     conn.commit()
     cur.close()
     conn.close()
-
     return jsonify({"message": f"🗑 Program '{program_code}' deleted successfully"})
