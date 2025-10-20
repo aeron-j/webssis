@@ -1,23 +1,64 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 
 const AddProgram = () => {
+  const [programCode, setProgramCode] = useState("");
+  const [programName, setProgramName] = useState("");
+  const [college, setCollege] = useState("");
+  const [colleges, setColleges] = useState([]);
+  const [message, setMessage] = useState("");
+
+  // Fetch colleges from backend
+  useEffect(() => {
+    fetch("http://127.0.0.1:5000/api/colleges")
+      .then((res) => res.json())
+      .then((data) => setColleges(data))
+      .catch((err) => console.error("Error fetching colleges:", err));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!programCode || !programName || !college) return;
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/programs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          program_code: programCode,
+          program_name: programName,
+          college: college,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessage(data.message);
+        setProgramCode("");
+        setProgramName("");
+        setCollege("");
+      } else {
+        setMessage("❌ Failed to add program.");
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage("⚠️ Could not connect to backend.");
+    }
+  };
+
   return (
     <div className="row vh-100">
-      {/* Sidebar */}
       <Sidebar type="program" />
 
-      {/* Main content */}
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Add Program</h2>
 
-        {/* Form Frame */}
         <div className="card p-4 bg-dark text-light">
           <h5>Program Information</h5>
           <hr />
 
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <label htmlFor="program_code" className="form-label">
                 Program Code
@@ -26,7 +67,8 @@ const AddProgram = () => {
                 type="text"
                 className="form-control"
                 id="program_code"
-                name="program_code"
+                value={programCode}
+                onChange={(e) => setProgramCode(e.target.value)}
                 required
               />
             </div>
@@ -39,7 +81,8 @@ const AddProgram = () => {
                 type="text"
                 className="form-control"
                 id="program_name"
-                name="program_name"
+                value={programName}
+                onChange={(e) => setProgramName(e.target.value)}
                 required
               />
             </div>
@@ -48,12 +91,19 @@ const AddProgram = () => {
               <label htmlFor="college" className="form-label">
                 College
               </label>
-              <select className="form-select" id="college" name="college" required>
+              <select
+                className="form-select"
+                id="college"
+                value={college}
+                onChange={(e) => setCollege(e.target.value)}
+                required
+              >
                 <option value="">Select College</option>
-                <option value="CIT">CIT - College of Information Technology</option>
-                <option value="CAS">CAS - College of Arts and Sciences</option>
-                <option value="COE">COE - College of Engineering</option>
-                <option value="CBA">CBA - College of Business Administration</option>
+                {colleges.map((c) => (
+                  <option key={c.college_code} value={c.college_code}>
+                    {c.college_code} - {c.college_name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -63,6 +113,10 @@ const AddProgram = () => {
               </button>
             </div>
           </form>
+
+          {message && (
+            <div className="alert alert-info mt-3 text-center">{message}</div>
+          )}
         </div>
       </div>
     </div>
