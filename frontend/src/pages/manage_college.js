@@ -6,17 +6,21 @@ const ManageCollege = () => {
   const [colleges, setColleges] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("");
-  const [selectedCollegeCode, setSelectedCollegeCode] = useState(null); // Track highlighted row
+  const [selectedCollegeCode, setSelectedCollegeCode] = useState(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/colleges")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Fetched colleges:", data);
-        setColleges(data);
-      })
-      .catch((err) => console.error("Error fetching colleges:", err));
+    fetchColleges();
   }, []);
+
+  const fetchColleges = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/colleges");
+      const data = await res.json();
+      setColleges(data);
+    } catch (err) {
+      console.error("Error fetching colleges:", err);
+    }
+  };
 
   const filteredColleges = colleges
     .filter((college) =>
@@ -28,22 +32,51 @@ const ManageCollege = () => {
       return 0;
     });
 
-  // Highlight row and store selected college
+  // Highlight row and store selected college in localStorage
   const handleRowClick = (college) => {
-    const newSelectedCode =
-      selectedCollegeCode === college.college_code ? null : college.college_code;
-    setSelectedCollegeCode(newSelectedCode);
+    setSelectedCollegeCode((prev) =>
+      prev === college.college_code ? null : college.college_code
+    );
+    localStorage.setItem("selectedCollege", JSON.stringify(college));
+  };
 
-    if (newSelectedCode) {
-      localStorage.setItem("selectedCollege", JSON.stringify(college));
-    } else {
-      localStorage.removeItem("selectedCollege");
+  // Delete triggered by Sidebar button
+  const handleDelete = async () => {
+    if (!selectedCollegeCode) {
+      alert("Please select a college first!");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this college?"
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:5000/api/colleges/${selectedCollegeCode}`,
+        { method: "DELETE" }
+      );
+
+      if (res.ok) {
+        setColleges((prev) =>
+          prev.filter((c) => c.college_code !== selectedCollegeCode)
+        );
+        setSelectedCollegeCode(null);
+        localStorage.removeItem("selectedCollege");
+        alert("College deleted successfully!");
+      } else {
+        alert("Failed to delete college.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Could not connect to backend.");
     }
   };
 
   return (
     <div className="row vh-100">
-      <Sidebar type="college" />
+      <Sidebar type="college" onDelete={handleDelete} />
 
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Manage College</h2>
