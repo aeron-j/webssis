@@ -37,22 +37,29 @@ def add_college():
 
     return jsonify({"message": "College added successfully!"}), 201
 
-# ✅ Update college
+# ✅ Update college (corrected to update code and name)
 @college_bp.route("/colleges/<college_code>", methods=["PUT"])
 def update_college(college_code):
     data = request.get_json()
+    new_code = data.get("college_code")
     college_name = data.get("college_name")
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE colleges SET college_name = %s WHERE college_code = %s",
-        (college_name, college_code)
-    )
-    conn.commit()
+    try:
+        cur.execute(
+            "UPDATE colleges SET college_code = %s, college_name = %s WHERE college_code = %s",
+            (new_code, college_name, college_code)
+        )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({"message": f"❌ Failed to update college: {str(e)}"}), 400
+
     cur.close()
     conn.close()
-
     return jsonify({"message": "College updated successfully!"})
 
 # ✅ Delete college

@@ -6,6 +6,7 @@ const ManageCollege = () => {
   const [colleges, setColleges] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("");
+  const [selectedCollegeCode, setSelectedCollegeCode] = useState(null); // Track highlighted row
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/colleges")
@@ -19,15 +20,26 @@ const ManageCollege = () => {
 
   const filteredColleges = colleges
     .filter((college) =>
-      college.college_name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
+      college.college_name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === "code") return a.college_code.localeCompare(b.college_code);
       if (sortBy === "name") return a.college_name.localeCompare(b.college_name);
       return 0;
     });
+
+  // Highlight row and store selected college
+  const handleRowClick = (college) => {
+    const newSelectedCode =
+      selectedCollegeCode === college.college_code ? null : college.college_code;
+    setSelectedCollegeCode(newSelectedCode);
+
+    if (newSelectedCode) {
+      localStorage.setItem("selectedCollege", JSON.stringify(college));
+    } else {
+      localStorage.removeItem("selectedCollege");
+    }
+  };
 
   return (
     <div className="row vh-100">
@@ -66,7 +78,16 @@ const ManageCollege = () => {
           <tbody>
             {filteredColleges.length > 0 ? (
               filteredColleges.map((college, index) => (
-                <tr key={index}>
+                <tr
+                  key={index}
+                  onClick={() => handleRowClick(college)}
+                  className={
+                    selectedCollegeCode === college.college_code
+                      ? "table-primary"
+                      : ""
+                  }
+                  style={{ cursor: "pointer" }}
+                >
                   <td>{college.college_code}</td>
                   <td>{college.college_name}</td>
                 </tr>
