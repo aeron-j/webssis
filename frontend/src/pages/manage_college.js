@@ -24,9 +24,15 @@ const ManageCollege = () => {
   };
 
   const filteredColleges = colleges
-    .filter((college) =>
-      college.college_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((college) => {
+      if (!searchTerm) return true;
+      const search = searchTerm.toLowerCase();
+      return (
+        college.college_name?.toLowerCase().includes(search) ||
+        college.college_code?.toLowerCase().includes(search)
+      );
+    })
+
     .sort((a, b) => {
       if (sortBy === "code") return a.college_code.localeCompare(b.college_code);
       if (sortBy === "name") return a.college_name.localeCompare(b.college_name);
@@ -126,7 +132,7 @@ const ManageCollege = () => {
                     }
                     style={{ cursor: "pointer" }}
                   >
-                    <td>{college.college_code}</td>
+                    <td>{college.college_code?.toUpperCase()}</td>
                     <td>{college.college_name}</td>
                   </tr>
                 ))

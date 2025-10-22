@@ -75,8 +75,15 @@ const ManageStudent = () => {
   const filteredStudents = students
     .filter((student) => {
       if (!searchTerm) return true;
-      const fullName = `${student.first_name} ${student.last_name}`.toLowerCase();
-      return fullName.includes(searchTerm.toLowerCase());
+      const search = searchTerm.toUpperCase();
+      return (
+        student.student_id.toUpperCase().includes(search) ||
+        student.first_name.toUpperCase().includes(search) ||
+        student.last_name.toUpperCase().includes(search) ||
+        student.gender.toUpperCase().includes(search) ||
+        student.year_level.toString().toUpperCase().includes(search) ||
+        student.course.toUpperCase().includes(search)
+      );
     })
     .filter((student) => {
       if (!filterBy) return true;
@@ -161,8 +168,8 @@ const ManageStudent = () => {
                     style={{ cursor: "pointer" }}
                   >
                     <td>{student.student_id}</td>
-                    <td>{student.first_name}</td>
-                    <td>{student.last_name}</td>
+                    <td>{student.first_name.toUpperCase()}</td>
+                    <td>{student.last_name.toUpperCase()}</td>
                     <td>{student.gender}</td>
                     <td>{student.year_level}</td>
                     <td>{student.course}</td>
