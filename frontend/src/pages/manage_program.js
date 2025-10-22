@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
+import "../styles/background.css";
 
 const ManageProgram = () => {
   const [programs, setPrograms] = useState([]);
@@ -71,7 +72,7 @@ const ManageProgram = () => {
   };
 
   return (
-    <div className="row vh-100">
+    <div className="row information-frame">
       <Sidebar type="program" onDelete={handleDelete} />
 
       <div className="col-10 bg-gradient p-4">
@@ -97,35 +98,37 @@ const ManageProgram = () => {
           </select>
         </div>
 
-        <table className="table table-dark table-striped">
-          <thead>
-            <tr>
-              <th>Program Code</th>
-              <th>Program</th>
-              <th>College</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPrograms.length > 0 ? (
-              filteredPrograms.map((program) => (
-                <tr
-                  key={program.code}
-                  onClick={() => handleRowClick(program.code)}
-                  className={selectedProgramCode === program.code ? "table-primary" : ""}
-                  style={{ cursor: "pointer" }}
-                >
-                  <td>{program.code}</td>
-                  <td>{program.name}</td>
-                  <td>{program.college}</td>
-                </tr>
-              ))
-            ) : (
+        <div className="table-wrapper">
+          <table className="table table-dark table-striped">
+            <thead>
               <tr>
-                <td colSpan="3" className="text-center text-muted">No programs found.</td>
+                <th>Program Code</th>
+                <th>Program</th>
+                <th>College</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredPrograms.length > 0 ? (
+                filteredPrograms.map((program) => (
+                  <tr
+                    key={program.code}
+                    onClick={() => handleRowClick(program.code)}
+                    className={selectedProgramCode === program.code ? "table-primary" : ""}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{program.code}</td>
+                    <td>{program.name}</td>
+                    <td>{program.college}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" className="text-center text-muted">No programs found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
+import "../styles/background.css";
+
 
 const ManageStudent = () => {
   const [students, setStudents] = useState([]);
-  const [programs, setPrograms] = useState([]); // Programs for course mapping
+  const [programs, setPrograms] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("");
   const [sortBy, setSortBy] = useState("");
@@ -91,8 +93,7 @@ const ManageStudent = () => {
     });
 
   return (
-    <div className="row vh-100">
-      {/* Pass handleDelete to Sidebar */}
+    <div className="row information-frame">
       <Sidebar type="student" onDelete={handleDelete} />
 
       <div className="col-10 bg-gradient p-4">
@@ -138,57 +139,63 @@ const ManageStudent = () => {
         </div>
 
         {/* Table */}
-        <table className="table table-dark table-striped">
-          <thead>
-            <tr>
-              <th>Student ID</th>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>Gender</th>
-              <th>Year Level</th>
-              <th>Course</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => (
-                <tr
-                  key={student.id}
-                  onClick={() => handleRowClick(student.id)}
-                  className={selectedStudentId === student.id ? "table-primary" : ""}
-                  style={{ cursor: "pointer" }}
-                >
-                  <td>{student.student_id}</td>
-                  <td>{student.first_name}</td>
-                  <td>{student.last_name}</td>
-                  <td>{student.gender}</td>
-                  <td>{student.year_level}</td>
-                  <td>{student.course}</td>
-                </tr>
-              ))
-            ) : (
+        <div className="table-responsive mb-5 table-wrapper">
+          <table className="table table-dark table-striped">
+            <thead>
               <tr>
-                <td colSpan="6" className="text-center text-muted">
-                  No students found.
-                </td>
+                <th className="table_header ">Student ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Gender</th>
+                <th>Year Level</th>
+                <th>Course</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredStudents.length > 0 ? (
+                filteredStudents.map((student) => (
+                  <tr
+                    key={student.id}
+                    onClick={() => handleRowClick(student.id)}
+                    className={selectedStudentId === student.id ? "table-primary" : ""}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{student.student_id}</td>
+                    <td>{student.first_name}</td>
+                    <td>{student.last_name}</td>
+                    <td>{student.gender}</td>
+                    <td>{student.year_level}</td>
+                    <td>{student.course}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center text-muted">
+                    No students found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Pagination */}
-        <div className="d-flex mt-2 justify-content-center">
-          <ul className="pagination">
+        {/* 🔹 Pagination — now at bottom of content, not screen */}
+        <div className="d-flex justify-content-center mt-4 mb-2">
+          <ul className="pagination mb-0">
             <li className="page-item disabled">
               <a className="page-link" href="#" aria-label="Previous">
                 <span aria-hidden="true">&laquo;</span>
               </a>
             </li>
             <li className="page-item active">
-              <a className="page-link" href="#">1</a>
+              <a className="page-link" href="#">
+                1
+              </a>
             </li>
             <li className="page-item">
-              <a className="page-link" href="#">2</a>
+              <a className="page-link" href="#">
+                2
+              </a>
             </li>
             <li className="page-item">
               <a className="page-link" href="#" aria-label="Next">

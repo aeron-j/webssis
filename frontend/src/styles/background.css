@@ -1,0 +1,41 @@
+.information-frame {
+  background: linear-gradient(236.67deg, #2E004F 0.06%, #3B0A6D 49.52%, #0F1C3D 99.94%);
+  width: 100%;
+  min-height: 100vh; /* full screen height */
+  position: relative; /* normal flow, not absolute */
+  overflow-y: auto;
+  padding: 0px;
+  color: white;
+}
+
+.table-dark {
+    --bs-table-color: white;
+    --bs-table-bg: transparent;
+    --bs-table-border-color:gray;
+    --bs-table-striped-bg: transparent;
+    --bs-table-striped-color:white;
+    --bs-table-active-bg:transparent;
+    --bs-table-active-color:gray;
+    --bs-table-hover-bg: transparent;
+    --bs-table-hover-color: transparent;
+    border-color: transparent;
+}
+
+.table-wrapper {
+  border: 2px solid gray;      /* Outer border color */
+  border-radius: 7px;          /* Rounded corners */
+  overflow: hidden;            /* Keeps rounded edges clean */
+  width: none;          /* Keeps border tight around table */
+  margin: 0 auto;              /* Centers the table if needed */
+  box-sizing: border-box;
+}
+
+.bg-transparent {
+    --bs-bg-opacity: 1;
+}
+
+.bg-dark {
+    --bs-bg-opacity: 1;
+    background-color: #0E0124 !important;
+}
+

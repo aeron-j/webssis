@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
+import "../styles/background.css";
 
 const AddCollege = () => {
   const [collegeCode, setCollegeCode] = useState("");
@@ -37,7 +38,7 @@ const AddCollege = () => {
   };
 
   return (
-    <div className="row vh-100">
+    <div className="row information-frame">
       {/* Sidebar */}
       <Sidebar type="college" />
 
@@ -46,7 +47,7 @@ const AddCollege = () => {
         <h2 className="fw-bold mb-4">Add College</h2>
 
         {/* Form Frame */}
-        <div className="card p-4 bg-dark text-light shadow-lg">
+        <div className="card p-4 bg-transparent text-light shadow-lg">
           <h5>College Information</h5>
           <hr />
 

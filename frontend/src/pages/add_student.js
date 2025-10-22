@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
+import "../styles/add_student.css";
 
 function AddStudent() {
   const [studentId, setStudentId] = useState("");
@@ -69,10 +70,10 @@ function AddStudent() {
   };
 
   return (
-    <div className="row vh-100">
+    <div className="row vh-row information-frame">
       <Sidebar type="student" />
 
-      <div className="col-10 p-4 bg-light">
+      <div className="col-10 p-4">
         <h2 className="fw-bold mb-4">Add Student</h2>
 
         <div className="card shadow-lg p-4">
