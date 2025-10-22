@@ -39,3 +39,7 @@
     background-color: #0E0124 !important;
 }
 
+.bg-info {
+    --bs-bg-opacity: 1;
+    background-color: rgba(217, 217, 217, 0.18) !important;
+}

@@ -2,22 +2,26 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
+import { useNavigate } from "react-router-dom";
 
 const UpdateCollege = () => {
-  const [collegeCode, setCollegeCode] = useState("");       // editable code
-  const [originalCode, setOriginalCode] = useState("");     // tracks original code for backend
+  const [collegeCode, setCollegeCode] = useState("");
+  const [originalCode, setOriginalCode] = useState("");
   const [collegeName, setCollegeName] = useState("");
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
-  // Load the highlighted college from localStorage
   useEffect(() => {
     const storedCollege = JSON.parse(localStorage.getItem("selectedCollege"));
-    if (storedCollege) {
-      setCollegeCode(storedCollege.college_code);
-      setOriginalCode(storedCollege.college_code); // keep original for backend
-      setCollegeName(storedCollege.college_name);
+    if (!storedCollege) {
+      alert("⚠️ No college selected!");
+      navigate("/manage-college");
+      return;
     }
-  }, []);
+    setCollegeCode(storedCollege.college_code);
+    setOriginalCode(storedCollege.college_code);
+    setCollegeName(storedCollege.college_name);
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,24 +33,14 @@ const UpdateCollege = () => {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            college_code: collegeCode, 
-            college_name: collegeName 
-          }),
+          body: JSON.stringify({ college_code: collegeCode, college_name: collegeName }),
         }
       );
 
       if (res.ok) {
         const result = await res.json();
-        setMessage(result.message);
-
-        // Update originalCode so future edits work correctly
-        setOriginalCode(collegeCode);
-        // Update localStorage to match the edited college
-        localStorage.setItem(
-          "selectedCollege",
-          JSON.stringify({ college_code: collegeCode, college_name: collegeName })
-        );
+        localStorage.setItem("collegeMessage", result.message);
+        navigate("/manage-college");
       } else {
         setMessage("❌ Failed to update college.");
       }
@@ -92,7 +86,16 @@ const UpdateCollege = () => {
               />
             </div>
 
-            <div className="text-end">
+            {/* Buttons: Cancel and Update College */}
+            <div className="d-flex justify-content-end mt-3">
+              <button
+                type="button"
+                className="btn btn-secondary me-2"
+                onClick={() => navigate("/manage-college")}
+              >
+                Cancel
+              </button>
+
               <button type="submit" className="btn btn-warning">
                 ✏ Update College
               </button>
