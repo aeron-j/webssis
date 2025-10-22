@@ -70,7 +70,7 @@ const Sidebar = ({ type, onDelete }) => {
   return (
     <div className="col-2 bg-dark p-4">
       {/* Sidebar Title */}
-      <h4 className="text-center text-light mb-4">🎓 Student System</h4>
+      <h4 className="text-center text-light mb-4">Student System</h4>
 
       {/* Section Links */}
       {renderLinks()}

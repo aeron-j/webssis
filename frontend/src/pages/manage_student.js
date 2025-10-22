@@ -3,14 +3,17 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
 
-
 const ManageStudent = () => {
   const [students, setStudents] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [programs, setPrograms] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterBy, setFilterBy] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const studentsPerPage = 10;
 
   // Fetch students
   const fetchStudents = () => {
@@ -31,11 +34,6 @@ const ManageStudent = () => {
       .then((data) => setPrograms(data))
       .catch((err) => console.error("Error fetching programs:", err));
   }, []);
-
-  const getProgramName = (code) => {
-    const program = programs.find((p) => p.code === code);
-    return program ? program.name : code;
-  };
 
   const handleRowClick = (id) => {
     setSelectedStudentId((prev) => (prev === id ? null : id));
@@ -72,6 +70,7 @@ const ManageStudent = () => {
     }
   };
 
+  // 🔹 Filtering (removed filterBy logic)
   const filteredStudents = students
     .filter((student) => {
       if (!searchTerm) return true;
@@ -85,19 +84,24 @@ const ManageStudent = () => {
         student.course.toUpperCase().includes(search)
       );
     })
-    .filter((student) => {
-      if (!filterBy) return true;
-      if (filterBy === "gender") return student.gender;
-      if (filterBy === "year_level") return student.year_level;
-      if (filterBy === "course") return student.course;
-      return true;
-    })
     .sort((a, b) => {
       if (sortBy === "student_id") return a.student_id.localeCompare(b.student_id);
       if (sortBy === "first_name") return a.first_name.localeCompare(b.first_name);
       if (sortBy === "last_name") return a.last_name.localeCompare(b.last_name);
       return 0;
     });
+
+  // 🔹 Pagination logic
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+  const indexOfLastStudent = currentPage * studentsPerPage;
+  const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
+  const currentStudents = filteredStudents.slice(indexOfFirstStudent, indexOfLastStudent);
+
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   return (
     <div className="row information-frame">
@@ -106,35 +110,27 @@ const ManageStudent = () => {
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Student Database</h2>
 
-        {/* Search + Filter + Sort */}
-        <div className="d-flex mb-3">
+        {/* Search + Sort */}
+        <div className="d-flex justify-content-between alight-items mb-3">
           <input
             type="text"
-            className="form-control me-2"
+            className="form-control w-50"
             placeholder="Search Student..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
-
-          {/* Filter dropdown */}
-          <select
-            className="form-select me-2"
-            value={filterBy}
-            onChange={(e) => setFilterBy(e.target.value)}
-          >
-            <option value="" disabled hidden>
-              Filter By
-            </option>
-            <option value="gender">Gender</option>
-            <option value="year_level">Year Level</option>
-            <option value="course">Course</option>
-          </select>
 
           {/* Sort dropdown */}
           <select
-            className="form-select"
+            className="form-select w-25 "
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              setCurrentPage(1);
+            }}
           >
             <option value="" disabled hidden>
               Sort By
@@ -150,7 +146,7 @@ const ManageStudent = () => {
           <table className="table table-dark table-striped">
             <thead>
               <tr>
-                <th className="table_header ">Student ID</th>
+                <th className="table_header">Student ID</th>
                 <th>First Name</th>
                 <th>Last Name</th>
                 <th>Gender</th>
@@ -159,8 +155,8 @@ const ManageStudent = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.length > 0 ? (
-                filteredStudents.map((student) => (
+              {currentStudents.length > 0 ? (
+                currentStudents.map((student) => (
                   <tr
                     key={student.id}
                     onClick={() => handleRowClick(student.id)}
@@ -172,7 +168,7 @@ const ManageStudent = () => {
                     <td>{student.last_name.toUpperCase()}</td>
                     <td>{student.gender}</td>
                     <td>{student.year_level}</td>
-                    <td>{student.course}</td>
+                    <td>{student.course.toUpperCase()}</td>
                   </tr>
                 ))
               ) : (
@@ -186,28 +182,30 @@ const ManageStudent = () => {
           </table>
         </div>
 
-        {/* 🔹 Pagination — now at bottom of content, not screen */}
+        {/* 🔹 Dynamic Pagination */}
         <div className="d-flex justify-content-center mt-4 mb-2">
           <ul className="pagination mb-0">
-            <li className="page-item disabled">
-              <a className="page-link" href="#" aria-label="Previous">
-                <span aria-hidden="true">&laquo;</span>
-              </a>
+            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+              <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
+                &laquo;
+              </button>
             </li>
-            <li className="page-item active">
-              <a className="page-link" href="#">
-                1
-              </a>
-            </li>
-            <li className="page-item">
-              <a className="page-link" href="#">
-                2
-              </a>
-            </li>
-            <li className="page-item">
-              <a className="page-link" href="#" aria-label="Next">
-                <span aria-hidden="true">&raquo;</span>
-              </a>
+
+            {[...Array(totalPages)].map((_, index) => (
+              <li
+                key={index + 1}
+                className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
+              >
+                <button className="page-link" onClick={() => handlePageChange(index + 1)}>
+                  {index + 1}
+                </button>
+              </li>
+            ))}
+
+            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+              <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
+                &raquo;
+              </button>
             </li>
           </ul>
         </div>
