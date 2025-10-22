@@ -25,7 +25,14 @@ const ManageProgram = () => {
   }, []);
 
   const filteredPrograms = programs
-    .filter((p) => p.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((p) => {
+      const term = searchTerm.toLowerCase();
+      return (
+        p.code?.toLowerCase().includes(term) ||
+        p.name?.toLowerCase().includes(term) ||
+        p.college?.toLowerCase().includes(term)
+      );
+    })
     .sort((a, b) => {
       if (sortBy === "code") return a.code.localeCompare(b.code);
       if (sortBy === "name") return a.name.localeCompare(b.name);
@@ -116,7 +123,7 @@ const ManageProgram = () => {
                     className={selectedProgramCode === program.code ? "table-primary" : ""}
                     style={{ cursor: "pointer" }}
                   >
-                    <td>{program.code}</td>
+                    <td>{program.code?.toUpperCase()}</td>
                     <td>{program.name}</td>
                     <td>{program.college}</td>
                   </tr>
