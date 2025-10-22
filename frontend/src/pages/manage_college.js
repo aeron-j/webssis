@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
+import "../styles/background.css";
 
 const ManageCollege = () => {
   const [colleges, setColleges] = useState([]);
@@ -73,7 +74,7 @@ const ManageCollege = () => {
   };
 
   return (
-    <div className="row vh-100">
+    <div className="row information-frame">
       <Sidebar type="college" onDelete={handleDelete} />
 
       <div className="col-10 bg-gradient p-4">
@@ -103,40 +104,42 @@ const ManageCollege = () => {
             <option value="name">College Name</option>
           </select>
         </div>
-
-        <table className="table table-dark table-striped">
-          <thead>
-            <tr>
-              <th>College Code</th>
-              <th>College Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredColleges.length > 0 ? (
-              filteredColleges.map((college, index) => (
-                <tr
-                  key={index}
-                  onClick={() => handleRowClick(college)}
-                  className={
-                    selectedCollegeCode === college.college_code
-                      ? "table-primary"
-                      : ""
-                  }
-                  style={{ cursor: "pointer" }}
-                >
-                  <td>{college.college_code}</td>
-                  <td>{college.college_name}</td>
-                </tr>
-              ))
-            ) : (
+        
+        <div className="table-wrapper">
+          <table className="table table-dark table-striped">
+            <thead>
               <tr>
-                <td colSpan="2" className="text-center text-muted">
-                  No colleges found.
-                </td>
+                <th>College Code</th>
+                <th>College Name</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredColleges.length > 0 ? (
+                filteredColleges.map((college, index) => (
+                  <tr
+                    key={index}
+                    onClick={() => handleRowClick(college)}
+                    className={
+                      selectedCollegeCode === college.college_code
+                        ? "table-primary"
+                        : ""
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{college.college_code}</td>
+                    <td>{college.college_name}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="2" className="text-center text-muted">
+                    No colleges found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

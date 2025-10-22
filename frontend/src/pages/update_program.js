@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
+import "../styles/background.css";
 
 const UpdateProgram = () => {
   const [programCode, setProgramCode] = useState("");
@@ -64,13 +65,13 @@ const UpdateProgram = () => {
   };
 
   return (
-    <div className="row vh-100">
+    <div className="row information-frame">
       <Sidebar type="program" />
 
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Update Program</h2>
 
-        <div className="card p-4 bg-dark text-light shadow-lg">
+        <div className="card p-4 bg-transparent text-light shadow-lg">
           <h5>Program Information</h5>
           <hr />
 

@@ -50,11 +50,11 @@ const Login = () => {
     */
 
     // Fallback: show a default error if not matched
-    setError("Invalid username or password. (Try admin/admin for quick test)");
+    setError("Invalid username or password.");
   };
 
   return (
-    <div className="bg-dark d-flex justify-content-center align-items-center vh-100">
+    <div className="information-frame d-flex justify-content-center align-items-center vh-100">
       <div className="card p-4 shadow-lg" style={{ width: "400px" }}>
         <h3 className="text-center mb-4">Login</h3>
 
