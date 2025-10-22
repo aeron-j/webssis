@@ -2,19 +2,18 @@ import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
+import { useNavigate } from "react-router-dom";
 
 const AddCollege = () => {
   const [collegeCode, setCollegeCode] = useState("");
   const [collegeName, setCollegeName] = useState("");
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const data = {
-      college_code: collegeCode,
-      college_name: collegeName,
-    };
+    const data = { college_code: collegeCode, college_name: collegeName };
 
     try {
       const res = await fetch("http://127.0.0.1:5000/api/colleges", {
@@ -25,9 +24,8 @@ const AddCollege = () => {
 
       if (res.ok) {
         const result = await res.json();
-        setMessage(result.message);
-        setCollegeCode("");
-        setCollegeName("");
+        localStorage.setItem("collegeMessage", result.message);
+        navigate("/manage-college");
       } else {
         setMessage("❌ Failed to add college. Please check backend logs.");
       }
@@ -39,14 +37,11 @@ const AddCollege = () => {
 
   return (
     <div className="row information-frame">
-      {/* Sidebar */}
       <Sidebar type="college" />
 
-      {/* Main Content */}
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Add College</h2>
 
-        {/* Form Frame */}
         <div className="card p-4 bg-transparent text-light shadow-lg">
           <h5>College Information</h5>
           <hr />
@@ -54,13 +49,10 @@ const AddCollege = () => {
           <form onSubmit={handleSubmit}>
             {/* College Code */}
             <div className="mb-3">
-              <label htmlFor="collegeCode" className="form-label">
-                College Code
-              </label>
+              <label className="form-label">College Code</label>
               <input
                 type="text"
                 className="form-control"
-                id="collegeCode"
                 placeholder="Enter college code"
                 value={collegeCode}
                 onChange={(e) => setCollegeCode(e.target.value)}
@@ -70,13 +62,10 @@ const AddCollege = () => {
 
             {/* College Name */}
             <div className="mb-3">
-              <label htmlFor="collegeName" className="form-label">
-                College Name
-              </label>
+              <label className="form-label">College Name</label>
               <input
                 type="text"
                 className="form-control"
-                id="collegeName"
                 placeholder="Enter college name"
                 value={collegeName}
                 onChange={(e) => setCollegeName(e.target.value)}
@@ -84,15 +73,22 @@ const AddCollege = () => {
               />
             </div>
 
-            {/* Add College Button */}
-            <div className="text-end">
+            {/* Buttons: Cancel and Add College */}
+            <div className="d-flex justify-content-end mt-3">
+              <button
+                type="button"
+                className="btn btn-secondary me-2"
+                onClick={() => navigate("/manage-college")}
+              >
+                Cancel
+              </button>
+
               <button type="submit" className="btn btn-success">
                 + Add College
               </button>
             </div>
           </form>
 
-          {/* Feedback Message */}
           {message && (
             <div className="alert alert-info mt-3 text-center">{message}</div>
           )}

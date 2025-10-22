@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
 
 const AddProgram = () => {
+  const navigate = useNavigate();
   const [programCode, setProgramCode] = useState("");
   const [programName, setProgramName] = useState("");
   const [college, setCollege] = useState("");
@@ -39,6 +41,8 @@ const AddProgram = () => {
         setProgramCode("");
         setProgramName("");
         setCollege("");
+        // Redirect to manage_program after success
+        setTimeout(() => navigate("/manage-program"), 1000);
       } else {
         setMessage("❌ Failed to add program.");
       }
@@ -109,6 +113,13 @@ const AddProgram = () => {
             </div>
 
             <div className="text-end">
+              <button
+                type="button"
+                className="btn btn-secondary me-2"
+                onClick={() => navigate("/manage-program")}
+              >
+                Cancel
+              </button>
               <button type="submit" className="btn btn-success">
                 + Add Program
               </button>

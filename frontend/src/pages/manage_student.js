@@ -5,13 +5,22 @@ import "../styles/background.css";
 
 const ManageStudent = () => {
   const [students, setStudents] = useState([]);
-  // eslint-disable-next-line no-unused-vars
+  //eslint-disable-next-line no-unused-vars
   const [programs, setPrograms] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
-  // Pagination states
+  // Show success message after add/update
+  useEffect(() => {
+    const msg = localStorage.getItem("studentMessage");
+    if (msg) {
+      alert(msg);
+      localStorage.removeItem("studentMessage");
+    }
+  }, []);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
 
@@ -27,7 +36,7 @@ const ManageStudent = () => {
     fetchStudents();
   }, []);
 
-  // Fetch programs (for course display)
+  // Fetch programs
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/programs")
       .then((res) => res.json())
@@ -35,20 +44,34 @@ const ManageStudent = () => {
       .catch((err) => console.error("Error fetching programs:", err));
   }, []);
 
-  const handleRowClick = (id) => {
-    setSelectedStudentId((prev) => (prev === id ? null : id));
+  const handleRowClick = (student) => {
+    if (selectedStudentId === student.id) {
+      setSelectedStudentId(null);
+      localStorage.removeItem("selectedStudent");
+    } else {
+      setSelectedStudentId(student.id);
+      localStorage.setItem(
+        "selectedStudent",
+        JSON.stringify({
+          id: student.id,
+          student_id: student.student_id,
+          first_name: student.first_name,
+          last_name: student.last_name,
+          gender: student.gender,
+          college: student.college, // must match college_code
+          course: student.course    // must match program code
+        })
+      );
+    }
   };
 
-  // 🔹 Delete student (called from Sidebar)
   const handleDelete = async () => {
     if (!selectedStudentId) {
-      alert("Please select a student to delete!");
+      alert("⚠️ Please select a student to delete!");
       return;
     }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this student?"
-    );
+    const confirmed = window.confirm("Are you sure you want to delete this student?");
     if (!confirmed) return;
 
     try {
@@ -56,11 +79,10 @@ const ManageStudent = () => {
         `http://127.0.0.1:5000/api/students/${selectedStudentId}`,
         { method: "DELETE" }
       );
-
       if (res.ok) {
         alert("Student deleted successfully!");
         setSelectedStudentId(null);
-        fetchStudents(); // Refresh table after deletion
+        fetchStudents();
       } else {
         alert("Failed to delete student.");
       }
@@ -70,7 +92,7 @@ const ManageStudent = () => {
     }
   };
 
-  // 🔹 Filtering (removed filterBy logic)
+  // Filtering
   const filteredStudents = students
     .filter((student) => {
       if (!searchTerm) return true;
@@ -91,7 +113,7 @@ const ManageStudent = () => {
       return 0;
     });
 
-  // 🔹 Pagination logic
+  // Pagination
   const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
   const indexOfLastStudent = currentPage * studentsPerPage;
   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
@@ -105,13 +127,13 @@ const ManageStudent = () => {
 
   return (
     <div className="row information-frame">
-      <Sidebar type="student" onDelete={handleDelete} />
+      <Sidebar type="student" onDelete={handleDelete} studentCount={students.length} />
 
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Student Database</h2>
 
         {/* Search + Sort */}
-        <div className="d-flex justify-content-between alight-items mb-3">
+        <div className="d-flex justify-content-between align-items-center mb-3">
           <input
             type="text"
             className="form-control w-50"
@@ -122,10 +144,8 @@ const ManageStudent = () => {
               setCurrentPage(1);
             }}
           />
-
-          {/* Sort dropdown */}
           <select
-            className="form-select w-25 "
+            className="form-select w-25"
             value={sortBy}
             onChange={(e) => {
               setSortBy(e.target.value);
@@ -146,7 +166,7 @@ const ManageStudent = () => {
           <table className="table table-dark table-striped">
             <thead>
               <tr>
-                <th className="table_header">Student ID</th>
+                <th>Student ID</th>
                 <th>First Name</th>
                 <th>Last Name</th>
                 <th>Gender</th>
@@ -159,7 +179,7 @@ const ManageStudent = () => {
                 currentStudents.map((student) => (
                   <tr
                     key={student.id}
-                    onClick={() => handleRowClick(student.id)}
+                    onClick={() => handleRowClick(student)}
                     className={selectedStudentId === student.id ? "table-primary" : ""}
                     style={{ cursor: "pointer" }}
                   >
@@ -168,7 +188,7 @@ const ManageStudent = () => {
                     <td>{student.last_name.toUpperCase()}</td>
                     <td>{student.gender}</td>
                     <td>{student.year_level}</td>
-                    <td>{student.course.toUpperCase()}</td>
+                    <td>{student.course ? student.course.toUpperCase() : ""}</td>
                   </tr>
                 ))
               ) : (
@@ -182,7 +202,7 @@ const ManageStudent = () => {
           </table>
         </div>
 
-        {/* 🔹 Dynamic Pagination */}
+        {/* Pagination */}
         <div className="d-flex justify-content-center mt-4 mb-2">
           <ul className="pagination mb-0">
             <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>

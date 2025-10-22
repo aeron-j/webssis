@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/add_student.css";
+import { useNavigate } from "react-router-dom"; // ✅ Added for navigation
 
 function AddStudent() {
   const [studentId, setStudentId] = useState("");
@@ -13,8 +14,9 @@ function AddStudent() {
   const [colleges, setColleges] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate(); // ✅ Hook for redirect
 
-  // Fetch colleges from backend
+  // Fetch colleges
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/colleges")
       .then((res) => res.json())
@@ -22,7 +24,7 @@ function AddStudent() {
       .catch((err) => console.error("Error fetching colleges:", err));
   }, []);
 
-  // Fetch programs from backend
+  // Fetch programs
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/programs")
       .then((res) => res.json())
@@ -38,8 +40,8 @@ function AddStudent() {
       first_name: firstName,
       last_name: lastName,
       gender: gender,
-      year_level: "1st Year", // default for now
-      course: program, // store program code
+      year_level: "1st Year",
+      course: program,
     };
 
     try {
@@ -60,6 +62,10 @@ function AddStudent() {
         setGender("");
         setCollege("");
         setProgram("");
+
+        // ✅ Store message and redirect
+        localStorage.setItem("studentMessage", "✅ Student added successfully!");
+        navigate("/manage-student");
       } else {
         setMessage("❌ Failed to add student. Check backend logs.");
       }
@@ -67,6 +73,11 @@ function AddStudent() {
       console.error(err);
       setMessage("⚠️ Could not connect to backend.");
     }
+  };
+
+  // ✅ Cancel button handler
+  const handleCancel = () => {
+    navigate("/manage-student");
   };
 
   return (
@@ -87,9 +98,20 @@ function AddStudent() {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter student ID"
+                placeholder="YYYY-NNNN (e.g., 2025-0001)"
                 value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^[0-9-]*$/.test(value) && value.length <= 9) {
+                    setStudentId(value);
+                  }
+                }}
+                onBlur={() => {
+                  if (studentId && !/^\d{4}-\d{4}$/.test(studentId)) {
+                    alert("❌ Invalid format! Use YYYY-NNNN (numbers only).");
+                    setStudentId("");
+                  }
+                }}
                 required
               />
             </div>
@@ -160,7 +182,7 @@ function AddStudent() {
                   value={college}
                   onChange={(e) => {
                     setCollege(e.target.value);
-                    setProgram(""); // reset program when college changes
+                    setProgram("");
                   }}
                   required
                 >
@@ -196,7 +218,15 @@ function AddStudent() {
               </div>
             </div>
 
+            {/* ✅ Buttons */}
             <div className="text-end mt-4">
+              <button
+                type="button"
+                className="btn btn-secondary me-2"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
               <button type="submit" className="btn btn-success">
                 + Add Student
               </button>

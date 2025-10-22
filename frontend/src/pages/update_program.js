@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
 
 const UpdateProgram = () => {
+  const navigate = useNavigate();
   const [programCode, setProgramCode] = useState("");
   const [originalCode, setOriginalCode] = useState("");
   const [programName, setProgramName] = useState("");
@@ -41,7 +43,7 @@ const UpdateProgram = () => {
           body: JSON.stringify({
             program_code: programCode,
             program_name: programName,
-            college: college
+            college: college,
           }),
         }
       );
@@ -55,6 +57,7 @@ const UpdateProgram = () => {
           JSON.stringify({ code: programCode, name: programName, college })
         );
         window.dispatchEvent(new Event("storage")); // refresh ManageProgram
+        setTimeout(() => navigate("/manage-program"), 1000);
       } else {
         setMessage("❌ Failed to update program.");
       }
@@ -116,6 +119,13 @@ const UpdateProgram = () => {
             </div>
 
             <div className="text-end">
+              <button
+                type="button"
+                className="btn btn-secondary me-2"
+                onClick={() => navigate("/manage-program")}
+              >
+                Cancel
+              </button>
               <button type="submit" className="btn btn-warning">
                 ✏ Update Program
               </button>

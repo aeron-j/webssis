@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const Sidebar = ({ type, onDelete }) => {
+const Sidebar = ({ type, onDelete, studentCount }) => {
   const renderLinks = () => {
     if (type === "student") {
       return (
@@ -76,7 +76,7 @@ const Sidebar = ({ type, onDelete }) => {
       {renderLinks()}
 
       {/* Common Navigation */}
-      <p className="text-light">Academic Setup</p>
+      <p className="text-light mt-4">Academic Setup</p>
       <Link to="/manage-student" className="btn btn-success w-100 mb-2">
         👩‍🎓 Manage Student
       </Link>
@@ -86,6 +86,21 @@ const Sidebar = ({ type, onDelete }) => {
       <Link to="/manage-program" className="btn btn-success w-100 mb-2">
         📚 Manage Program
       </Link>
+      
+      {/* Total Students Card */}
+      {type === "student" && studentCount !== undefined && (
+        <div className="card text-white bg-info mx-auto" style={{
+           maxWidth: "10rem",
+           maxHeight: "7rem",
+          textAlign: "center",
+          marginTop: "20px" 
+         }}>
+          <div className="card-body">
+            <p className="card-text fs-3" style={{ fontSize : "1rem"}}>{studentCount}</p>
+            <h5 className="card-title" style={{ fontSize : "1rem", marginBottom: "rem" }}>Total Students</h5>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

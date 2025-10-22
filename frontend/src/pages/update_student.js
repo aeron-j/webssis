@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
+import { useNavigate } from "react-router-dom";
 
 function UpdateStudent() {
+  const navigate = useNavigate();
+
   const [studentId, setStudentId] = useState("");
   const [originalId, setOriginalId] = useState(""); // For PUT request
   const [firstName, setFirstName] = useState("");
@@ -13,37 +16,50 @@ function UpdateStudent() {
   const [program, setProgram] = useState("");
   const [colleges, setColleges] = useState([]);
   const [programs, setPrograms] = useState([]);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true); // Wait until data is ready
 
-  // Load selected student from localStorage
+  // Load colleges and programs first, THEN load student data
   useEffect(() => {
-    const storedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
-    if (storedStudent) {
-      setStudentId(storedStudent.student_id);
-      setOriginalId(storedStudent.student_id);
-      setFirstName(storedStudent.first_name);
-      setLastName(storedStudent.last_name);
-      setGender(storedStudent.gender);
-      setCollege(storedStudent.college);
-      setProgram(storedStudent.course);
-    }
-  }, []);
+    const loadData = async () => {
+      try {
+        // Fetch colleges
+        const collegesRes = await fetch("http://127.0.0.1:5000/api/colleges");
+        const collegesData = await collegesRes.json();
+        setColleges(collegesData);
 
-  // Fetch colleges
-  useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/colleges")
-      .then((res) => res.json())
-      .then((data) => setColleges(data))
-      .catch((err) => console.error("Error fetching colleges:", err));
-  }, []);
+        // Fetch programs
+        const programsRes = await fetch("http://127.0.0.1:5000/api/programs");
+        const programsData = await programsRes.json();
+        setPrograms(programsData);
 
-  // Fetch programs
-  useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/programs")
-      .then((res) => res.json())
-      .then((data) => setPrograms(data))
-      .catch((err) => console.error("Error fetching programs:", err));
-  }, []);
+        // Now load the selected student
+        const storedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
+
+        if (!storedStudent) {
+          alert("❌ Please select a student to update!");
+          navigate("/manage-student");
+          return;
+        }
+
+        // Set all student data
+        setStudentId(storedStudent.student_id);
+        setOriginalId(storedStudent.student_id);
+        setFirstName(storedStudent.first_name);
+        setLastName(storedStudent.last_name);
+        setGender(storedStudent.gender);
+        setCollege(storedStudent.college || "");
+        setProgram(storedStudent.course || "");
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        alert("Failed to load data");
+        navigate("/manage-student");
+      }
+    };
+
+    loadData();
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,28 +70,41 @@ function UpdateStudent() {
       last_name: lastName,
       gender,
       year_level: "1st Year",
-      course: program
+      course: program,
+      college: college,
     };
 
     try {
       const res = await fetch(`http://127.0.0.1:5000/api/students/${originalId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         const result = await res.json();
-        setMessage(result.message);
-        localStorage.removeItem("selectedStudent"); // optional
+        alert(result.message);
+        localStorage.removeItem("selectedStudent");
+        navigate("/manage-student");
       } else {
-        setMessage("❌ Failed to update student.");
+        alert("❌ Failed to update student. Check backend logs.");
       }
     } catch (err) {
       console.error(err);
-      setMessage("⚠️ Could not connect to backend.");
+      alert("⚠️ Could not connect to backend.");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="row information-frame">
+        <Sidebar type="student" />
+        <div className="col-10 p-4">
+          <h2 className="fw-bold mb-4">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="row information-frame">
@@ -201,10 +230,6 @@ function UpdateStudent() {
               </button>
             </div>
           </form>
-
-          {message && (
-            <div className="alert alert-info mt-3 text-center">{message}</div>
-          )}
         </div>
       </div>
     </div>
