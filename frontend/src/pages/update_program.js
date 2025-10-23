@@ -109,7 +109,7 @@ const UpdateProgram = () => {
                 onChange={(e) => setCollege(e.target.value)}
                 required
               >
-                <option value="">Select College</option>
+                <option value="" disabled hidden>Select College</option>
                 {colleges.map((c) => (
                   <option key={c.college_code} value={c.college_code}>
                     {c.college_code} - {c.college_name}

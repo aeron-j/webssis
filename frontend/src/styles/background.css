@@ -1,8 +1,8 @@
 .information-frame {
   background: linear-gradient(236.67deg, #2E004F 0.06%, #3B0A6D 49.52%, #0F1C3D 99.94%);
   width: 100%;
-  min-height: 100vh; /* full screen height */
-  position: relative; /* normal flow, not absolute */
+  min-height: 100vh; 
+  position: relative; 
   overflow-y: auto;
   padding: 0px;
   color: white;
@@ -22,11 +22,11 @@
 }
 
 .table-wrapper {
-  border: 2px solid gray;      /* Outer border color */
-  border-radius: 7px;          /* Rounded corners */
-  overflow: hidden;            /* Keeps rounded edges clean */
-  width: none;          /* Keeps border tight around table */
-  margin: 0 auto;              /* Centers the table if needed */
+  border: 2px solid gray;      
+  border-radius: 7px;          
+  overflow: hidden;            
+  width: none;          
+  margin: 0 auto;              
   box-sizing: border-box;
 }
 
@@ -43,3 +43,31 @@
     --bs-bg-opacity: 1;
     background-color: rgba(217, 217, 217, 0.18) !important;
 }
+
+.text-center {
+    text-align: center !important;
+    color: white;
+}
+
+.form-control::placeholder {
+  color: #959aa4 !important; 
+  opacity: 1;
+}
+
+.btn-success {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #07B951;
+    --bs-btn-border-color: #07B951;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #07B951;
+    --bs-btn-hover-border-color: #07B951;
+    --bs-btn-focus-shadow-rgb: 60, 153, 110;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #07B951;
+    --bs-btn-active-border-color: #07B951;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #07B951;
+    --bs-btn-disabled-border-color: #07B951;
+}
+

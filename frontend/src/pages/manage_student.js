@@ -5,26 +5,14 @@ import "../styles/background.css";
 
 const ManageStudent = () => {
   const [students, setStudents] = useState([]);
-  //eslint-disable-next-line no-unused-vars
   const [programs, setPrograms] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState(null);
-
-  // Show success message after add/update
-  useEffect(() => {
-    const msg = localStorage.getItem("studentMessage");
-    if (msg) {
-      alert(msg);
-      localStorage.removeItem("studentMessage");
-    }
-  }, []);
-
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
 
-  // Fetch students
+
   const fetchStudents = () => {
     fetch("http://127.0.0.1:5000/api/students")
       .then((res) => res.json())
@@ -36,7 +24,6 @@ const ManageStudent = () => {
     fetchStudents();
   }, []);
 
-  // Fetch programs
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/programs")
       .then((res) => res.json())
@@ -58,8 +45,8 @@ const ManageStudent = () => {
           first_name: student.first_name,
           last_name: student.last_name,
           gender: student.gender,
-          college: student.college, // must match college_code
-          course: student.course    // must match program code
+          college: student.college,
+          course: student.course,
         })
       );
     }
@@ -92,7 +79,6 @@ const ManageStudent = () => {
     }
   };
 
-  // Filtering
   const filteredStudents = students
     .filter((student) => {
       if (!searchTerm) return true;
@@ -102,7 +88,9 @@ const ManageStudent = () => {
         (student.first_name || "").toUpperCase().includes(search) ||
         (student.last_name || "").toUpperCase().includes(search) ||
         (student.gender || "").toUpperCase().includes(search) ||
-        (student.year_level ? student.year_level.toString().toUpperCase().includes(search) : false) ||
+        (student.year_level
+          ? student.year_level.toString().toUpperCase().includes(search)
+          : false) ||
         (student.course || "").toUpperCase().includes(search)
       );
     })
@@ -113,7 +101,6 @@ const ManageStudent = () => {
       return 0;
     });
 
-  // Pagination
   const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
   const indexOfLastStudent = currentPage * studentsPerPage;
   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
@@ -162,8 +149,8 @@ const ManageStudent = () => {
         </div>
 
         {/* Table */}
-        <div className="table-responsive mb-5 table-wrapper">
-          <table className="table table-dark table-striped">
+        <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px" }}>
+          <table className="table table-dark table-striped mb-0">
             <thead>
               <tr>
                 <th>Student ID</th>
@@ -174,7 +161,7 @@ const ManageStudent = () => {
                 <th>Course</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody style={{ minHeight: "400px" }}>
               {currentStudents.length > 0 ? (
                 currentStudents.map((student) => (
                   <tr
@@ -200,34 +187,37 @@ const ManageStudent = () => {
               )}
             </tbody>
           </table>
-        </div>
 
-        {/* Pagination */}
-        <div className="d-flex justify-content-center mt-4 mb-2">
-          <ul className="pagination mb-0">
-            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-              <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                &laquo;
-              </button>
-            </li>
-
-            {[...Array(totalPages)].map((_, index) => (
-              <li
-                key={index + 1}
-                className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
-              >
-                <button className="page-link" onClick={() => handlePageChange(index + 1)}>
-                  {index + 1}
+          {/* Pagination inside table frame */}
+          <div
+            className="d-flex justify-content-center align-items-center py-3 bg-transparent position-absolute w-100"
+            style={{ bottom: 0, left: 0 }}
+          >
+            <ul className="pagination mb-0">
+              <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
+                  &laquo;
                 </button>
               </li>
-            ))}
 
-            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-              <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                &raquo;
-              </button>
-            </li>
-          </ul>
+              {[...Array(totalPages)].map((_, index) => (
+                <li
+                  key={index + 1}
+                  className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
+                >
+                  <button className="page-link" onClick={() => handlePageChange(index + 1)}>
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
+
+              <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
+                  &raquo;
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

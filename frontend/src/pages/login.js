@@ -1,4 +1,3 @@
-// src/pages/login.js
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
@@ -13,49 +12,23 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // simple client-side validation
     if (!username || !password) {
       setError("Please enter both username and password.");
       return;
     }
 
-    // Option A: Local dummy login (fast for testing)
-    // If username/password are acceptable, navigate to manage page:
     if (username === "admin" && password === "admin") {
       setError("");
       navigate("/manage-student");
       return;
     }
 
-    // Option B: Real login via Flask API (uncomment & adapt)
-    /*
-    try {
-      const res = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-        credentials: "include" // if using cookies/session
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setError("");
-        navigate("/manage-student");
-      } else {
-        setError(data.message || "Login failed");
-      }
-    } catch (err) {
-      setError("Unable to reach server. Try again later.");
-    }
-    */
-
-    // Fallback: show a default error if not matched
     setError("Invalid username or password.");
   };
 
   return (
     <div className="information-frame d-flex justify-content-center align-items-center vh-100">
-      <div className="card p-4 shadow-lg" style={{ width: "400px" }}>
+      <div className="card p-4 shadow-lg bg-dark" style={{ width: "400px" }}>
         <h3 className="text-center mb-4">Login</h3>
 
         {error && <div className="alert alert-danger">{error}</div>}
