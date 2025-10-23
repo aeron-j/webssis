@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const Sidebar = ({ type, onDelete, studentCount }) => {
+const Sidebar = ({ type, onDelete, studentCount, collegeCount, programCount }) => {
   const renderLinks = () => {
     if (type === "student") {
       return (
@@ -98,6 +98,34 @@ const Sidebar = ({ type, onDelete, studentCount }) => {
           <div className="card-body">
             <p className="card-text fs-3" style={{ fontSize : "1rem"}}>{studentCount}</p>
             <h5 className="card-title" style={{ fontSize : "1rem", marginBottom: "rem" }}>Total Students</h5>
+          </div>
+        </div>
+      )}
+      
+      {type === "college" && collegeCount !== undefined && (
+        <div className="card text-white bg-info mx-auto" style={{
+          maxWidth: "10rem",
+          maxHeight: "7rem",
+          textAlign: "center",
+          marginTop: "20px"
+        }}>
+          <div className="card-body">
+            <p className="card-text fs-3" style={{ fontSize : "1rem"}}>{collegeCount}</p>
+            <h5 className="card-title" style={{ fontSize : "1rem", marginBottom: "0"}}>Total Colleges</h5>
+          </div>
+        </div>
+      )}
+
+      {type === "program" && programCount !== undefined && (
+        <div className="card text-white bg-info mx-auto" style={{
+          maxWidth: "10rem",
+          maxHeight: "7rem",
+          textAlign: "center",
+          marginTop: "20px"
+        }}>
+          <div className="card-body">
+            <p className="card-text fs-3" style={{ fontSize : "1rem"}}>{programCount}</p>
+            <h5 className="card-title" style={{ fontSize : "1rem", marginBottom: "0"}}>Total Colleges</h5>
           </div>
         </div>
       )}

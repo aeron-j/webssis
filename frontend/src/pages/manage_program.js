@@ -80,7 +80,7 @@ const ManageProgram = () => {
 
   return (
     <div className="row information-frame">
-      <Sidebar type="program" onDelete={handleDelete} />
+      <Sidebar type="program" onDelete={handleDelete} programCount={programs.length} />
 
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Manage Program</h2>

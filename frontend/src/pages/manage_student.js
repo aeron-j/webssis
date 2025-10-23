@@ -98,12 +98,12 @@ const ManageStudent = () => {
       if (!searchTerm) return true;
       const search = searchTerm.toUpperCase();
       return (
-        student.student_id.toUpperCase().includes(search) ||
-        student.first_name.toUpperCase().includes(search) ||
-        student.last_name.toUpperCase().includes(search) ||
-        student.gender.toUpperCase().includes(search) ||
-        student.year_level.toString().toUpperCase().includes(search) ||
-        student.course.toUpperCase().includes(search)
+        (student.student_id || "").toUpperCase().includes(search) ||
+        (student.first_name || "").toUpperCase().includes(search) ||
+        (student.last_name || "").toUpperCase().includes(search) ||
+        (student.gender || "").toUpperCase().includes(search) ||
+        (student.year_level ? student.year_level.toString().toUpperCase().includes(search) : false) ||
+        (student.course || "").toUpperCase().includes(search)
       );
     })
     .sort((a, b) => {
