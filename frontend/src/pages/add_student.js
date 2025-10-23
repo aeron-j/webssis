@@ -186,8 +186,8 @@ function AddStudent() {
                   }}
                   required
                 >
-                  <option value="" disabled>
-                    Choose college...
+                  <option value="" disabled hidden>
+                    Select college...
                   </option>
                   {colleges.map((c) => (
                     <option key={c.college_code} value={c.college_code}>
@@ -204,8 +204,8 @@ function AddStudent() {
                   onChange={(e) => setProgram(e.target.value)}
                   required
                 >
-                  <option value="" disabled>
-                    Choose program...
+                  <option value="" disabled hidden>
+                    Select program...
                   </option>
                   {programs
                     .filter((p) => p.college === college)

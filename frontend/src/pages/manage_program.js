@@ -9,7 +9,6 @@ const ManageProgram = () => {
   const [sortBy, setSortBy] = useState("");
   const [selectedProgramCode, setSelectedProgramCode] = useState(null);
 
-  // Fetch programs
   const fetchPrograms = () => {
     fetch("http://127.0.0.1:5000/api/programs")
       .then((res) => res.json())
@@ -46,7 +45,6 @@ const ManageProgram = () => {
     if (selected) localStorage.setItem("selectedProgram", JSON.stringify(selected));
   };
 
-  // 🔹 Delete Program
   const handleDelete = async () => {
     if (!selectedProgramCode) {
       alert("Please select a program to delete!");
@@ -68,7 +66,7 @@ const ManageProgram = () => {
         alert("Program deleted successfully!");
         setSelectedProgramCode(null);
         localStorage.removeItem("selectedProgram");
-        fetchPrograms(); // refresh table
+        fetchPrograms(); 
       } else {
         alert("Failed to delete program.");
       }
@@ -98,7 +96,7 @@ const ManageProgram = () => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
-            <option value="" disabled>Sort By</option>
+            <option value="" disabled hidden>Sort By</option>
             <option value="code">Program Code</option>
             <option value="name">Program</option>
             <option value="college">College</option>
