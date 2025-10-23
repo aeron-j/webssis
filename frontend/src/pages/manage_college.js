@@ -81,7 +81,7 @@ const ManageCollege = () => {
 
   return (
     <div className="row information-frame">
-      <Sidebar type="college" onDelete={handleDelete} />
+      <Sidebar type="college" onDelete={handleDelete} collegeCount={colleges.length}/>
 
       <div className="col-10 bg-gradient p-4">
         <h2 className="fw-bold mb-4">Manage College</h2>

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
-import "../styles/background.css";
+import "../styles/add_student.css"; // ✅ match AddStudent style
 import { useNavigate } from "react-router-dom";
 
 function UpdateStudent() {
-  const navigate = useNavigate();
-
   const [studentId, setStudentId] = useState("");
-  const [originalId, setOriginalId] = useState(""); // For PUT request
+  const [originalId, setOriginalId] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState("");
@@ -16,98 +14,86 @@ function UpdateStudent() {
   const [program, setProgram] = useState("");
   const [colleges, setColleges] = useState([]);
   const [programs, setPrograms] = useState([]);
-  const [loading, setLoading] = useState(true); // Wait until data is ready
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
-  // Load colleges and programs first, THEN load student data
+  // ✅ Load colleges and programs
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Fetch colleges
-        const collegesRes = await fetch("http://127.0.0.1:5000/api/colleges");
-        const collegesData = await collegesRes.json();
-        setColleges(collegesData);
+    fetch("http://127.0.0.1:5000/api/colleges")
+      .then((res) => res.json())
+      .then((data) => setColleges(data))
+      .catch((err) => console.error("Error fetching colleges:", err));
 
-        // Fetch programs
-        const programsRes = await fetch("http://127.0.0.1:5000/api/programs");
-        const programsData = await programsRes.json();
-        setPrograms(programsData);
+    fetch("http://127.0.0.1:5000/api/programs")
+      .then((res) => res.json())
+      .then((data) => setPrograms(data))
+      .catch((err) => console.error("Error fetching programs:", err));
+  }, []);
 
-        // Now load the selected student
-        const storedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
-
-        if (!storedStudent) {
-          alert("❌ Please select a student to update!");
-          navigate("/manage-student");
-          return;
-        }
-
-        // Set all student data
-        setStudentId(storedStudent.student_id);
-        setOriginalId(storedStudent.student_id);
-        setFirstName(storedStudent.first_name);
-        setLastName(storedStudent.last_name);
-        setGender(storedStudent.gender);
-        setCollege(storedStudent.college || "");
-        setProgram(storedStudent.course || "");
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading data:", err);
-        alert("Failed to load data");
-        navigate("/manage-student");
-      }
-    };
-
-    loadData();
-  }, [navigate]);
+  // ✅ Load selected student data from localStorage
+  useEffect(() => {
+    const storedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
+    if (storedStudent) {
+      setStudentId(storedStudent.student_id);
+      setOriginalId(storedStudent.id); // ✅ use numeric database ID
+      setFirstName(storedStudent.first_name);
+      setLastName(storedStudent.last_name);
+      setGender(storedStudent.gender);
+      setCollege(storedStudent.college || "");
+      setProgram(storedStudent.course || "");
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!originalId) {
+      setMessage("⚠️ No student selected for update.");
+      return;
+    }
 
     const payload = {
       student_id: studentId,
       first_name: firstName,
       last_name: lastName,
-      gender,
+      gender: gender,
       year_level: "1st Year",
       course: program,
       college: college,
     };
 
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/students/${originalId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `http://127.0.0.1:5000/api/students/${originalId}`, // ✅ use correct URL
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (res.ok) {
         const result = await res.json();
-        alert(result.message);
+        setMessage(result.message);
         localStorage.removeItem("selectedStudent");
         navigate("/manage-student");
       } else {
-        alert("❌ Failed to update student. Check backend logs.");
+        setMessage("❌ Failed to update student. Check backend logs.");
       }
     } catch (err) {
       console.error(err);
-      alert("⚠️ Could not connect to backend.");
+      setMessage("⚠️ Could not connect to backend.");
     }
   };
 
-  if (loading) {
-    return (
-      <div className="row information-frame">
-        <Sidebar type="student" />
-        <div className="col-10 p-4">
-          <h2 className="fw-bold mb-4">Loading...</h2>
-        </div>
-      </div>
-    );
-  }
+  // ✅ Cancel button
+  const handleCancel = () => {
+    localStorage.removeItem("selectedStudent");
+    navigate("/manage-student");
+  };
 
   return (
-    <div className="row information-frame">
+    <div className="row vh-row information-frame">
       <Sidebar type="student" />
 
       <div className="col-10 p-4">
@@ -118,13 +104,26 @@ function UpdateStudent() {
             {/* Personal Info */}
             <h5 className="fw-bold">Personal Information</h5>
             <hr />
+
             <div className="mb-3">
               <label className="form-label">Student ID</label>
               <input
                 type="text"
                 className="form-control"
+                placeholder="YYYY-NNNN (e.g., 2025-0001)"
                 value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^[0-9-]*$/.test(value) && value.length <= 9) {
+                    setStudentId(value);
+                  }
+                }}
+                onBlur={() => {
+                  if (studentId && !/^\d{4}-\d{4}$/.test(studentId)) {
+                    alert("❌ Invalid format! Use YYYY-NNNN (numbers only).");
+                    setStudentId("");
+                  }
+                }}
                 required
               />
             </div>
@@ -135,6 +134,7 @@ function UpdateStudent() {
                 <input
                   type="text"
                   className="form-control"
+                  placeholder="Enter first name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
@@ -145,6 +145,7 @@ function UpdateStudent() {
                 <input
                   type="text"
                   className="form-control"
+                  placeholder="Enter last name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
@@ -163,6 +164,7 @@ function UpdateStudent() {
                     value="Male"
                     checked={gender === "Male"}
                     onChange={(e) => setGender(e.target.value)}
+                    required
                   />
                   <label className="form-check-label">Male</label>
                 </div>
@@ -183,13 +185,17 @@ function UpdateStudent() {
             {/* Academic Info */}
             <h5 className="fw-bold mt-4">Academic Information</h5>
             <hr />
+
             <div className="row mb-3">
               <div className="col-md-6">
                 <label className="form-label">College</label>
                 <select
                   className="form-select"
                   value={college}
-                  onChange={(e) => setCollege(e.target.value)}
+                  onChange={(e) => {
+                    setCollege(e.target.value);
+                    setProgram("");
+                  }}
                   required
                 >
                   <option value="" disabled>
@@ -202,6 +208,7 @@ function UpdateStudent() {
                   ))}
                 </select>
               </div>
+
               <div className="col-md-6">
                 <label className="form-label">Program</label>
                 <select
@@ -224,12 +231,24 @@ function UpdateStudent() {
               </div>
             </div>
 
+            {/* ✅ Buttons */}
             <div className="text-end mt-4">
+              <button
+                type="button"
+                className="btn btn-secondary me-2"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
               <button type="submit" className="btn btn-warning">
                 ✏ Update Student
               </button>
             </div>
           </form>
+
+          {message && (
+            <div className="alert alert-info mt-3 text-center">{message}</div>
+          )}
         </div>
       </div>
     </div>
