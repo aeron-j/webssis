@@ -3,7 +3,7 @@ from db_connection import get_db_connection
 
 college_bp = Blueprint("college_bp", __name__)
 
-# ✅ Get all colleges
+
 @college_bp.route("/colleges", methods=["GET"])
 def get_colleges():
     conn = get_db_connection()
@@ -14,7 +14,7 @@ def get_colleges():
     conn.close()
     return jsonify([{"college_code": row[0], "college_name": row[1]} for row in colleges])
 
-# ✅ Add a new college
+
 @college_bp.route("/colleges", methods=["POST"])
 def add_college():
     data = request.get_json()
@@ -23,6 +23,16 @@ def add_college():
 
     conn = get_db_connection()
     cur = conn.cursor()
+
+    cur.execute(
+        "SELECT 1 FROM colleges WHERE LOWER(college_code) = LOWER(%s) OR LOWER(college_name) = LOWER(%s)",
+        (college_code, college_name)
+    )
+    if cur.fetchone():
+        cur.close()
+        conn.close()
+        return jsonify({"message": "❌ College code or name already exists (case-insensitive check)."}), 400
+
     try:
         cur.execute(
             "INSERT INTO colleges (college_code, college_name) VALUES (%s, %s)",
@@ -39,7 +49,7 @@ def add_college():
     conn.close()
     return jsonify({"message": "College added successfully!"}), 201
 
-# ✅ Update college (foreign keys handle propagation)
+
 @college_bp.route("/colleges/<college_code>", methods=["PUT"])
 def update_college(college_code):
     data = request.get_json()
@@ -48,6 +58,20 @@ def update_college(college_code):
 
     conn = get_db_connection()
     cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT 1 FROM colleges 
+        WHERE (LOWER(college_code) = LOWER(%s) OR LOWER(college_name) = LOWER(%s))
+        AND LOWER(college_code) != LOWER(%s)
+        """,
+        (new_code, college_name, college_code)
+    )
+    if cur.fetchone():
+        cur.close()
+        conn.close()
+        return jsonify({"message": "❌ Another college already has that code or name (case-insensitive)."}), 400
+
     try:
         cur.execute(
             "UPDATE colleges SET college_code = %s, college_name = %s WHERE college_code = %s",
@@ -64,7 +88,7 @@ def update_college(college_code):
     conn.close()
     return jsonify({"message": f"✏ College '{college_code}' updated successfully"})
 
-# ✅ Delete college (child programs will set college = NULL)
+
 @college_bp.route("/colleges/<college_code>", methods=["DELETE"])
 def delete_college(college_code):
     conn = get_db_connection()

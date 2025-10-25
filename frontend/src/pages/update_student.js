@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
-import "../styles/add_student.css"; // ✅ match AddStudent style
+import "../styles/add_student.css"; 
 import { useNavigate } from "react-router-dom";
 
 function UpdateStudent() {
@@ -17,7 +17,7 @@ function UpdateStudent() {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Load colleges and programs
+
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/colleges")
       .then((res) => res.json())
@@ -30,12 +30,12 @@ function UpdateStudent() {
       .catch((err) => console.error("Error fetching programs:", err));
   }, []);
 
-  // ✅ Load selected student data from localStorage
+
   useEffect(() => {
     const storedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
     if (storedStudent) {
       setStudentId(storedStudent.student_id);
-      setOriginalId(storedStudent.id); // ✅ use numeric database ID
+      setOriginalId(storedStudent.id); 
       setFirstName(storedStudent.first_name);
       setLastName(storedStudent.last_name);
       setGender(storedStudent.gender);
@@ -64,7 +64,7 @@ function UpdateStudent() {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:5000/api/students/${originalId}`, // ✅ use correct URL
+        `http://127.0.0.1:5000/api/students/${originalId}`, 
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -78,7 +78,8 @@ function UpdateStudent() {
         localStorage.removeItem("selectedStudent");
         navigate("/manage-student");
       } else {
-        setMessage("❌ Failed to update student. Check backend logs.");
+        const errorData = await res.json();
+        setMessage(errorData.error || "❌ Failed to add student. Check backend logs.");
       }
     } catch (err) {
       console.error(err);
@@ -86,7 +87,7 @@ function UpdateStudent() {
     }
   };
 
-  // ✅ Cancel button
+  
   const handleCancel = () => {
     localStorage.removeItem("selectedStudent");
     navigate("/manage-student");
@@ -231,7 +232,7 @@ function UpdateStudent() {
               </div>
             </div>
 
-            {/* ✅ Buttons */}
+            {/*  Buttons */}
             <div className="text-end mt-4">
               <button
                 type="button"
