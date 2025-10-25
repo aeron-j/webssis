@@ -12,7 +12,6 @@ const AddProgram = () => {
   const [colleges, setColleges] = useState([]);
   const [message, setMessage] = useState("");
 
-  // Fetch colleges from backend
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/colleges")
       .then((res) => res.json())
@@ -35,16 +34,15 @@ const AddProgram = () => {
         }),
       });
 
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setMessage(data.message);
         setProgramCode("");
         setProgramName("");
         setCollege("");
-        // Redirect to manage_program after success
         setTimeout(() => navigate("/manage-program"), 1000);
       } else {
-        setMessage("❌ Failed to add program.");
+        setMessage(data.message || "❌ Failed to add program.");
       }
     } catch (error) {
       console.error(error);

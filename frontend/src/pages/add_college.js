@@ -21,13 +21,13 @@ const AddCollege = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
+      
+      const result = await res.json();
       if (res.ok) {
-        const result = await res.json();
         localStorage.setItem("collegeMessage", result.message);
         navigate("/manage-college");
       } else {
-        setMessage("❌ Failed to add college. Please check backend logs.");
+        setMessage(result.message || "❌ Failed to add college. Please check backend logs.");
       }
     } catch (error) {
       console.error("Error adding college:", error);

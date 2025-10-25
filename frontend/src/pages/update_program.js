@@ -48,18 +48,18 @@ const UpdateProgram = () => {
         }
       );
 
+      const result = await res.json();
       if (res.ok) {
-        const result = await res.json();
         setMessage(result.message);
         setOriginalCode(programCode);
         localStorage.setItem(
           "selectedProgram",
           JSON.stringify({ code: programCode, name: programName, college })
         );
-        window.dispatchEvent(new Event("storage")); // refresh ManageProgram
+        window.dispatchEvent(new Event("storage")); 
         setTimeout(() => navigate("/manage-program"), 1000);
       } else {
-        setMessage("❌ Failed to update program.");
+        setMessage(result.message || "❌ Failed to update program.");
       }
     } catch (error) {
       console.error(error);

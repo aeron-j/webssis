@@ -67,7 +67,8 @@ function AddStudent() {
         localStorage.setItem("studentMessage", "✅ Student added successfully!");
         navigate("/manage-student");
       } else {
-        setMessage("❌ Failed to add student. Check backend logs.");
+        const errorData = await res.json();
+        setMessage(errorData.error || "❌ Failed to add student. Check backend logs.");
       }
     } catch (err) {
       console.error(err);
@@ -218,7 +219,7 @@ function AddStudent() {
               </div>
             </div>
 
-            {/* ✅ Buttons */}
+            {/*  Buttons */}
             <div className="text-end mt-4">
               <button
                 type="button"

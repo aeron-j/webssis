@@ -36,13 +36,12 @@ const UpdateCollege = () => {
           body: JSON.stringify({ college_code: collegeCode, college_name: collegeName }),
         }
       );
-
+      const result = await res.json();
       if (res.ok) {
-        const result = await res.json();
         localStorage.setItem("collegeMessage", result.message);
         navigate("/manage-college");
       } else {
-        setMessage("❌ Failed to update college.");
+        setMessage(result.message || "❌ Failed to update college.");
       }
     } catch (error) {
       console.error(error);

@@ -3,13 +3,13 @@ from db_connection import get_db_connection
 
 student_bp = Blueprint("student", __name__)
 
-# 🔹 Get all students (with program + college info)
+
 @student_bp.route("/students", methods=["GET"])
 def get_students():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # ✅ Join programs and colleges to include college info
+    
     cur.execute("""
         SELECT 
             s.id,
@@ -37,13 +37,13 @@ def get_students():
             "last_name": s[3],
             "gender": s[4],
             "year_level": s[5],
-            "course": s[6],      # program code
-            "college": s[7],     # ✅ added
+            "course": s[6],      
+            "college": s[7],     
         })
     return jsonify(result)
 
 
-# 🔹 Add new student
+
 @student_bp.route("/students", methods=["POST"])
 def add_student():
     data = request.get_json()
@@ -56,6 +56,15 @@ def add_student():
 
     conn = get_db_connection()
     cur = conn.cursor()
+
+    
+    cur.execute("SELECT id FROM students WHERE student_id = %s;", (student_id,))
+    existing = cur.fetchone()
+    if existing:
+        cur.close()
+        conn.close()
+        return jsonify({"error": "❌ Student ID already exists!"}), 400
+
     cur.execute("""
         INSERT INTO students (student_id, first_name, last_name, gender, year_level, course)
         VALUES (%s, %s, %s, %s, %s, %s)
@@ -69,7 +78,7 @@ def add_student():
     return jsonify({"message": "✅ Student added successfully", "id": new_id}), 201
 
 
-# 🔹 Update existing student
+
 @student_bp.route("/students/<int:id>", methods=["PUT"])
 def update_student(id):
     data = request.get_json()
@@ -82,6 +91,15 @@ def update_student(id):
 
     conn = get_db_connection()
     cur = conn.cursor()
+
+    
+    cur.execute("SELECT id FROM students WHERE student_id = %s AND id != %s;", (student_id, id))
+    existing = cur.fetchone()
+    if existing:
+        cur.close()
+        conn.close()
+        return jsonify({"error": "❌ Student ID already exists!"}), 400
+
     cur.execute("""
         UPDATE students
         SET student_id = %s,
@@ -99,7 +117,8 @@ def update_student(id):
     return jsonify({"message": f"✏ Student ID {id} updated successfully"})
 
 
-# 🔹 Delete student
+
+
 @student_bp.route("/students/<int:id>", methods=["DELETE"])
 def delete_student(id):
     conn = get_db_connection()

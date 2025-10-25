@@ -8,27 +8,48 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!username || !password) {
-      setError("Please enter both username and password.");
-      return;
-    }
+  if (!username || !password) {
+    setError("Please enter both username and password.");
+    return;
+  }
 
-    if (username === "admin" && password === "admin") {
+  try {
+    const res = await fetch("http://127.0.0.1:5000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
       setError("");
-      navigate("/manage-student");
-      return;
-    }
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("username", username);
 
-    setError("Invalid username or password.");
-  };
+      if (data.role === "admin ") {
+        navigate("/manage-student");
+      } else {
+        navigate("/manage-student"); 
+      }
+    } else {
+      setError(data.message || "Invalid username or password.");
+    }
+  } catch (error) {
+    console.error(error);
+    setError("Failed to connect to the server.");
+  }
+};
+
 
   return (
     <div className="information-frame d-flex justify-content-center align-items-center vh-100">
-      <div className="card p-4 shadow-lg bg-dark" style={{ width: "400px" }}>
+      <div className="card p-4 shadow-lg bg-dark text-white" style={{ width: "400px" }}>
         <h3 className="text-center mb-4">Login</h3>
 
         {error && <div className="alert alert-danger">{error}</div>}
@@ -43,6 +64,7 @@ const Login = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -55,11 +77,12 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-100">
-            Login
+          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>

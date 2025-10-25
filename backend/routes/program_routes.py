@@ -3,7 +3,7 @@ from db_connection import get_db_connection
 
 program_bp = Blueprint("program", __name__)
 
-# 🔹 Get all programs
+
 @program_bp.route("/programs", methods=["GET"])
 def get_programs():
     conn = get_db_connection()
@@ -15,7 +15,7 @@ def get_programs():
     programs = [{"code": r[0], "name": r[1], "college": r[2]} for r in rows]
     return jsonify(programs)
 
-# 🔹 Add a new program
+
 @program_bp.route("/programs", methods=["POST"])
 def add_program():
     data = request.get_json()
@@ -25,6 +25,22 @@ def add_program():
 
     conn = get_db_connection()
     cur = conn.cursor()
+    
+    cur.execute(
+        """
+        SELECT 1 FROM programs
+        WHERE LOWER(program_code) = LOWER(%s)
+        OR LOWER(program_name) = LOWER(%s)
+        """,
+        (program_code, program_name),
+    )
+    if cur.fetchone():
+        cur.close()
+        conn.close()
+        return jsonify({
+            "message": "❌ Program code or name already exists (case-insensitive check)."
+        }), 400
+
     try:
         cur.execute(
             "INSERT INTO programs (program_code, program_name, college) VALUES (%s, %s, %s)",
@@ -41,7 +57,7 @@ def add_program():
     conn.close()
     return jsonify({"message": "✅ Program added successfully"})
 
-# 🔹 Update program
+
 @program_bp.route("/programs/<program_code>", methods=["PUT"])
 def update_program(program_code):
     data = request.get_json()
@@ -51,6 +67,22 @@ def update_program(program_code):
 
     conn = get_db_connection()
     cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT 1 FROM programs
+        WHERE (LOWER(program_code) = LOWER(%s) OR LOWER(program_name) = LOWER(%s))
+        AND LOWER(program_code) != LOWER(%s)
+        """,
+        (new_code, program_name, program_code),
+    )
+    if cur.fetchone():
+        cur.close()
+        conn.close()
+        return jsonify({
+            "message": "❌ Another program already has that code or name (case-insensitive)."
+        }), 400
+
     try:
         cur.execute(
             "UPDATE programs SET program_code = %s, program_name = %s, college = %s WHERE program_code = %s",
@@ -67,7 +99,7 @@ def update_program(program_code):
     conn.close()
     return jsonify({"message": f"✏ Program '{program_code}' updated successfully"})
 
-# 🔹 Delete program (students.course will automatically set NULL)
+
 @program_bp.route("/programs/<program_code>", methods=["DELETE"])
 def delete_program(program_code):
     conn = get_db_connection()
