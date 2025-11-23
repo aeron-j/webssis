@@ -31,7 +31,7 @@ def add_college():
     if cur.fetchone():
         cur.close()
         conn.close()
-        return jsonify({"message": "❌ College code or name already exists (case-insensitive check)."}), 400
+        return jsonify({"message": "❌ College code or name already exists."}), 400
 
     try:
         cur.execute(

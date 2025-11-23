@@ -38,7 +38,7 @@ def add_program():
         cur.close()
         conn.close()
         return jsonify({
-            "message": "❌ Program code or name already exists (case-insensitive check)."
+            "message": "❌ Program code or name already exists."
         }), 400
 
     try:
