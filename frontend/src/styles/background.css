@@ -71,3 +71,6 @@
     --bs-btn-disabled-border-color: #07B951;
 }
 
+thead {
+    background-color: rgba(217, 217, 217, 0.18);
+}

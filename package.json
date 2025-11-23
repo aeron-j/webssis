@@ -1,0 +1,15 @@
+{
+  "name": "webssis",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && pip install -r requirements.txt",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && python app.py",
+    "start:frontend": "cd frontend && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
