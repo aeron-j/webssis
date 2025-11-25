@@ -10,8 +10,8 @@ const ManageStudent = () => {
   const [sortBy, setSortBy] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStudentDetails, setSelectedStudentDetails] = useState(null);
   const studentsPerPage = 10;
-
 
   const fetchStudents = () => {
     fetch("http://127.0.0.1:5000/api/students")
@@ -34,9 +34,11 @@ const ManageStudent = () => {
   const handleRowClick = (student) => {
     if (selectedStudentId === student.id) {
       setSelectedStudentId(null);
+      setSelectedStudentDetails(null);
       localStorage.removeItem("selectedStudent");
     } else {
       setSelectedStudentId(student.id);
+      setSelectedStudentDetails(student);
       localStorage.setItem(
         "selectedStudent",
         JSON.stringify({
@@ -47,6 +49,7 @@ const ManageStudent = () => {
           gender: student.gender,
           college: student.college,
           course: student.course,
+          avatar_url: student.avatar_url,
         })
       );
     }
@@ -69,6 +72,7 @@ const ManageStudent = () => {
       if (res.ok) {
         alert("Student deleted successfully!");
         setSelectedStudentId(null);
+        setSelectedStudentDetails(null);
         fetchStudents();
       } else {
         alert("Failed to delete student.");
@@ -148,11 +152,52 @@ const ManageStudent = () => {
           </select>
         </div>
 
+        {/* Student Details Card - Show when a student is selected */}
+        {selectedStudentDetails && (
+          <div className="card mb-3 shadow-sm">
+            <div className="card-body">
+              <div className="row align-items-center">
+                <div className="col-auto">
+                  {selectedStudentDetails.avatar_url ? (
+                    <img
+                      src={selectedStudentDetails.avatar_url}
+                      alt={`${selectedStudentDetails.first_name} ${selectedStudentDetails.last_name}`}
+                      className="rounded-circle"
+                      style={{ width: "80px", height: "80px", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div
+                      className="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
+                      style={{ width: "80px", height: "80px" }}
+                    >
+                      <i className="bi bi-person-fill text-white" style={{ fontSize: "40px" }}></i>
+                    </div>
+                  )}
+                </div>
+                <div className="col">
+                  <h5 className="mb-1">
+                    {selectedStudentDetails.first_name.toUpperCase()} {selectedStudentDetails.last_name.toUpperCase()}
+                  </h5>
+                  <p className="mb-1">
+                    <strong>Student ID:</strong> {selectedStudentDetails.student_id}
+                  </p>
+                  <p className="mb-1">
+                    <strong>Gender:</strong> {selectedStudentDetails.gender} | 
+                    <strong> Year Level:</strong> {selectedStudentDetails.year_level} | 
+                    <strong> Course:</strong> {selectedStudentDetails.course?.toUpperCase() || "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Table */}
         <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px" }}>
           <table className="table table-dark table-striped mb-0">
             <thead>
               <tr>
+                <th style={{ width: "60px" }}>Photo</th>
                 <th>Student ID</th>
                 <th>First Name</th>
                 <th>Last Name</th>
@@ -170,6 +215,23 @@ const ManageStudent = () => {
                     className={selectedStudentId === student.id ? "table-primary" : ""}
                     style={{ cursor: "pointer" }}
                   >
+                    <td>
+                      {student.avatar_url ? (
+                        <img
+                          src={student.avatar_url}
+                          alt={student.first_name}
+                          className="rounded-circle"
+                          style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                        />
+                      ) : (
+                        <div
+                          className="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
+                          style={{ width: "40px", height: "40px" }}
+                        >
+                          <i className="bi bi-person-fill text-white" style={{ fontSize: "20px" }}></i>
+                        </div>
+                      )}
+                    </td>
                     <td>{student.student_id}</td>
                     <td>{student.first_name.toUpperCase()}</td>
                     <td>{student.last_name.toUpperCase()}</td>
@@ -180,7 +242,7 @@ const ManageStudent = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center text-muted">
+                  <td colSpan="7" className="text-center text-muted">
                     No students found.
                   </td>
                 </tr>

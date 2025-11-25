@@ -15,6 +15,9 @@ function UpdateStudent() {
   const [colleges, setColleges] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [message, setMessage] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [existingAvatarUrl, setExistingAvatarUrl] = useState(null);
   const navigate = useNavigate();
 
 
@@ -41,8 +44,34 @@ function UpdateStudent() {
       setGender(storedStudent.gender);
       setCollege(storedStudent.college || "");
       setProgram(storedStudent.course || "");
+      setExistingAvatarUrl(storedStudent.avatar_url || null);
+      setAvatarPreview(storedStudent.avatar_url || null);
     }
   }, []);
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        alert("❌ Please upload a valid image file (PNG, JPG, GIF, WEBP)");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert("❌ Image size must be less than 5MB");
+        return;
+      }
+
+      setAvatarFile(file);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,23 +81,25 @@ function UpdateStudent() {
       return;
     }
 
-    const payload = {
-      student_id: studentId,
-      first_name: firstName,
-      last_name: lastName,
-      gender: gender,
-      year_level: "1st Year",
-      course: program,
-      college: college,
-    };
+    const formData = new FormData();
+    formData.append("student_id", studentId);
+    formData.append("first_name", firstName);
+    formData.append("last_name", lastName);
+    formData.append("gender", gender);
+    formData.append("year_level", "1st Year");
+    formData.append("course", program);
+    formData.append("college", college);
+    
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
 
     try {
       const res = await fetch(
         `http://127.0.0.1:5000/api/students/${originalId}`, 
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: formData,
         }
       );
 
@@ -76,10 +107,13 @@ function UpdateStudent() {
         const result = await res.json();
         setMessage(result.message);
         localStorage.removeItem("selectedStudent");
-        navigate("/manage-student");
+        
+        setTimeout(() => {
+          navigate("/manage-student");
+        }, 1500);
       } else {
         const errorData = await res.json();
-        setMessage(errorData.error || "❌ Failed to add student. Check backend logs.");
+        setMessage(errorData.error || "❌ Failed to update student.");
       }
     } catch (err) {
       console.error(err);
@@ -102,6 +136,38 @@ function UpdateStudent() {
 
         <div className="card shadow-lg p-4">
           <form onSubmit={handleSubmit}>
+            {/* Avatar Upload */}
+            <div className="text-center mb-4">
+              <div className="mb-3">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Avatar Preview"
+                    className="rounded-circle"
+                    style={{ width: "150px", height: "150px", objectFit: "cover", border: "3px solid #dee2e6" }}
+                  />
+                ) : (
+                  <div
+                    className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto"
+                    style={{ width: "150px", height: "150px", border: "3px solid #dee2e6" }}
+                  >
+                    <i className="bi bi-person-fill text-white" style={{ fontSize: "80px" }}></i>
+                  </div>
+                )}
+              </div>
+              <label htmlFor="avatar-upload" className="btn btn-outline-warning btn-sm">
+                📷 Change Photo
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                style={{ display: "none" }}
+              />
+              <small className="d-block text-muted mt-2">Max size: 5MB (PNG, JPG, GIF, WEBP)</small>
+            </div>
+
             {/* Personal Info */}
             <h5 className="fw-bold">Personal Information</h5>
             <hr />

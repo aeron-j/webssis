@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/add_student.css";
-import { useNavigate } from "react-router-dom"; // ✅ Added for navigation
+import { useNavigate } from "react-router-dom";
 
 function AddStudent() {
   const [studentId, setStudentId] = useState("");
@@ -14,7 +14,9 @@ function AddStudent() {
   const [colleges, setColleges] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [message, setMessage] = useState("");
-  const navigate = useNavigate(); // ✅ Hook for redirect
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch colleges
   useEffect(() => {
@@ -32,23 +34,52 @@ function AddStudent() {
       .catch((err) => console.error("Error fetching programs:", err));
   }, []);
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        alert("❌ Please upload a valid image file (PNG, JPG, GIF, WEBP)");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("❌ Image size must be less than 5MB");
+        return;
+      }
+
+      setAvatarFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      student_id: studentId,
-      first_name: firstName,
-      last_name: lastName,
-      gender: gender,
-      year_level: "1st Year",
-      course: program,
-    };
+    const formData = new FormData();
+    formData.append("student_id", studentId);
+    formData.append("first_name", firstName);
+    formData.append("last_name", lastName);
+    formData.append("gender", gender);
+    formData.append("year_level", "1st Year");
+    formData.append("course", program);
+    
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
 
     try {
       const res = await fetch("http://127.0.0.1:5000/api/students", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (res.ok) {
@@ -62,10 +93,13 @@ function AddStudent() {
         setGender("");
         setCollege("");
         setProgram("");
+        setAvatarFile(null);
+        setAvatarPreview(null);
 
-        // ✅ Store message and redirect
-        localStorage.setItem("studentMessage", "✅ Student added successfully!");
-        navigate("/manage-student");
+        // Redirect with success message
+        setTimeout(() => {
+          navigate("/manage-student");
+        }, 1500);
       } else {
         const errorData = await res.json();
         setMessage(errorData.error || "❌ Failed to add student. Check backend logs.");
@@ -76,7 +110,6 @@ function AddStudent() {
     }
   };
 
-  // ✅ Cancel button handler
   const handleCancel = () => {
     navigate("/manage-student");
   };
@@ -90,6 +123,38 @@ function AddStudent() {
 
         <div className="card shadow-lg p-4">
           <form onSubmit={handleSubmit}>
+            {/* Avatar Upload */}
+            <div className="text-center mb-4">
+              <div className="mb-3">
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Avatar Preview"
+                    className="rounded-circle"
+                    style={{ width: "150px", height: "150px", objectFit: "cover", border: "3px solid #dee2e6" }}
+                  />
+                ) : (
+                  <div
+                    className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto"
+                    style={{ width: "150px", height: "150px", border: "3px solid #dee2e6" }}
+                  >
+                    <i className="bi bi-person-fill text-white" style={{ fontSize: "80px" }}></i>
+                  </div>
+                )}
+              </div>
+              <label htmlFor="avatar-upload" className="btn btn-outline-primary btn-sm">
+                📷 Upload Photo
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                style={{ display: "none" }}
+              />
+              <small className="d-block text-muted mt-2">Max size: 5MB (PNG, JPG, GIF, WEBP)</small>
+            </div>
+
             {/* Personal Info */}
             <h5 className="fw-bold">Personal Information</h5>
             <hr />
@@ -219,7 +284,7 @@ function AddStudent() {
               </div>
             </div>
 
-            {/*  Buttons */}
+            {/* Buttons */}
             <div className="text-end mt-4">
               <button
                 type="button"
