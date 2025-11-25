@@ -1,11 +1,11 @@
 import psycopg2
-from db_connection import create_connection as get_db_connection
+from db_connection import get_db_connection
 
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Example: create tables
+    # Create colleges table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS colleges (
         id SERIAL PRIMARY KEY,
@@ -14,21 +14,27 @@ def init_db():
     );
     """)
 
+    # Create programs table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS programs (
         id SERIAL PRIMARY KEY,
         program_code VARCHAR(10) UNIQUE NOT NULL,
         program_name VARCHAR(100) NOT NULL,
-        college_id INT REFERENCES colleges(id) ON DELETE CASCADE
+        college VARCHAR(10) REFERENCES colleges(college_code) ON DELETE CASCADE
     );
     """)
 
+    # Create students table with all necessary columns
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS students (
         id SERIAL PRIMARY KEY,
         student_id VARCHAR(20) UNIQUE NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        program_id INT REFERENCES programs(id) ON DELETE SET NULL
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        gender VARCHAR(10) NOT NULL,
+        year_level VARCHAR(20) NOT NULL,
+        course VARCHAR(10) REFERENCES programs(program_code) ON DELETE SET NULL,
+        avatar_url TEXT
     );
     """)
 
