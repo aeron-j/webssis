@@ -9,6 +9,7 @@ function AddStudent() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState("");
+  const [yearLevel, setYearLevel] = useState("");
   const [college, setCollege] = useState("");
   const [program, setProgram] = useState("");
   const [colleges, setColleges] = useState([]);
@@ -17,6 +18,9 @@ function AddStudent() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const navigate = useNavigate();
+
+  // Year level options
+  const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5+ Year"];
 
   // Fetch colleges
   useEffect(() => {
@@ -69,7 +73,7 @@ function AddStudent() {
     formData.append("first_name", firstName);
     formData.append("last_name", lastName);
     formData.append("gender", gender);
-    formData.append("year_level", "1st Year");
+    formData.append("year_level", yearLevel);
     formData.append("course", program);
     
     if (avatarFile) {
@@ -91,6 +95,7 @@ function AddStudent() {
         setFirstName("");
         setLastName("");
         setGender("");
+        setYearLevel("");
         setCollege("");
         setProgram("");
         setAvatarFile(null);
@@ -239,6 +244,27 @@ function AddStudent() {
             {/* Academic Info */}
             <h5 className="fw-bold mt-4">Academic Information</h5>
             <hr />
+
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <label className="form-label">Year Level</label>
+                <select
+                  className="form-select"
+                  value={yearLevel}
+                  onChange={(e) => setYearLevel(e.target.value)}
+                  required
+                >
+                  <option value="" disabled hidden>
+                    Select year level...
+                  </option>
+                  {yearLevels.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <div className="row mb-3">
               <div className="col-md-6">
