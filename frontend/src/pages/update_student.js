@@ -10,6 +10,7 @@ function UpdateStudent() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState("");
+  const [yearLevel, setYearLevel] = useState("");
   const [college, setCollege] = useState("");
   const [program, setProgram] = useState("");
   const [colleges, setColleges] = useState([]);
@@ -20,6 +21,8 @@ function UpdateStudent() {
   const [existingAvatarUrl, setExistingAvatarUrl] = useState(null);
   const navigate = useNavigate();
 
+  // Year level options
+  const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5+ Year"];
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/colleges")
@@ -33,7 +36,6 @@ function UpdateStudent() {
       .catch((err) => console.error("Error fetching programs:", err));
   }, []);
 
-
   useEffect(() => {
     const storedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
     if (storedStudent) {
@@ -42,6 +44,7 @@ function UpdateStudent() {
       setFirstName(storedStudent.first_name);
       setLastName(storedStudent.last_name);
       setGender(storedStudent.gender);
+      setYearLevel(storedStudent.year_level || "");
       setCollege(storedStudent.college || "");
       setProgram(storedStudent.course || "");
       setExistingAvatarUrl(storedStudent.avatar_url || null);
@@ -86,7 +89,7 @@ function UpdateStudent() {
     formData.append("first_name", firstName);
     formData.append("last_name", lastName);
     formData.append("gender", gender);
-    formData.append("year_level", "1st Year");
+    formData.append("year_level", yearLevel);
     formData.append("course", program);
     formData.append("college", college);
     
@@ -121,7 +124,6 @@ function UpdateStudent() {
     }
   };
 
-  
   const handleCancel = () => {
     localStorage.removeItem("selectedStudent");
     navigate("/manage-student");
@@ -252,6 +254,27 @@ function UpdateStudent() {
             {/* Academic Info */}
             <h5 className="fw-bold mt-4">Academic Information</h5>
             <hr />
+
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <label className="form-label">Year Level</label>
+                <select
+                  className="form-select"
+                  value={yearLevel}
+                  onChange={(e) => setYearLevel(e.target.value)}
+                  required
+                >
+                  <option value="" disabled hidden>
+                    Select year level...
+                  </option>
+                  {yearLevels.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <div className="row mb-3">
               <div className="col-md-6">

@@ -47,6 +47,7 @@ const ManageStudent = () => {
           first_name: student.first_name,
           last_name: student.last_name,
           gender: student.gender,
+          year_level: student.year_level,  // ← Added this
           college: student.college,
           course: student.course,
           avatar_url: student.avatar_url,
