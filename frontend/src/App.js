@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // import pages
 import Login from "./pages/login";
@@ -16,16 +17,82 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public route - Login */}
         <Route path="/" element={<Login />} />
-        <Route path="/add-student" element={<AddStudent />} />
-        <Route path="/add-program" element={<AddProgram />} />
-        <Route path="/add-college" element={<AddCollege />} />
-        <Route path="/manage-student" element={<ManageStudent />} />
-        <Route path="/manage-program" element={<ManageProgram />} />
-        <Route path="/manage-college" element={<ManageCollege />} />
-        <Route path="/update-student" element={<UpdateStudent />} />
-        <Route path="/update-program" element={<UpdateProgram />} />
-        <Route path="/update-college" element={<UpdateCollege />} />
+
+        {/* Protected routes - require authentication */}
+        <Route
+          path="/add-student"
+          element={
+            <ProtectedRoute>
+              <AddStudent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-program"
+          element={
+            <ProtectedRoute>
+              <AddProgram />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-college"
+          element={
+            <ProtectedRoute>
+              <AddCollege />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manage-student"
+          element={
+            <ProtectedRoute>
+              <ManageStudent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manage-program"
+          element={
+            <ProtectedRoute>
+              <ManageProgram />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manage-college"
+          element={
+            <ProtectedRoute>
+              <ManageCollege />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/update-student"
+          element={
+            <ProtectedRoute>
+              <UpdateStudent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/update-program"
+          element={
+            <ProtectedRoute>
+              <UpdateProgram />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/update-college"
+          element={
+            <ProtectedRoute>
+              <UpdateCollege />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );
