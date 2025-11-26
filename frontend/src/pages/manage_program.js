@@ -8,6 +8,8 @@ const ManageProgram = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [selectedProgramCode, setSelectedProgramCode] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const programsPerPage = 10;
 
   const fetchPrograms = () => {
     fetch("http://127.0.0.1:5000/api/programs")
@@ -38,6 +40,18 @@ const ManageProgram = () => {
       if (sortBy === "college") return a.college.localeCompare(b.college);
       return 0;
     });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPrograms.length / programsPerPage);
+  const indexOfLastProgram = currentPage * programsPerPage;
+  const indexOfFirstProgram = indexOfLastProgram - programsPerPage;
+  const currentPrograms = filteredPrograms.slice(indexOfFirstProgram, indexOfLastProgram);
+
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   const handleRowClick = (program_code) => {
     setSelectedProgramCode((prev) => (prev === program_code ? null : program_code));
@@ -89,12 +103,18 @@ const ManageProgram = () => {
             className="form-control w-50"
             placeholder="🔍 Search Program..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Reset to first page on search
+            }}
           />
           <select
             className="form-select w-25"
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+              setCurrentPage(1); // Reset to first page on sort
+            }}
           >
             <option value="" disabled hidden>Sort By</option>
             <option value="code">Program Code</option>
@@ -103,8 +123,8 @@ const ManageProgram = () => {
           </select>
         </div>
 
-        <div className="table-wrapper">
-          <table className="table table-dark table-striped">
+        <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px" }}>
+          <table className="table table-dark table-striped mb-0">
             <thead>
               <tr>
                 <th>Program Code</th>
@@ -112,9 +132,9 @@ const ManageProgram = () => {
                 <th>College</th>
               </tr>
             </thead>
-            <tbody>
-              {filteredPrograms.length > 0 ? (
-                filteredPrograms.map((program) => (
+            <tbody style={{ minHeight: "400px" }}>
+              {currentPrograms.length > 0 ? (
+                currentPrograms.map((program) => (
                   <tr
                     key={program.code}
                     onClick={() => handleRowClick(program.code)}
@@ -133,6 +153,37 @@ const ManageProgram = () => {
               )}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          <div
+            className="d-flex justify-content-center align-items-center py-3 bg-transparent position-absolute w-100"
+            style={{ bottom: 0, left: 0 }}
+          >
+            <ul className="pagination mb-0">
+              <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
+                  &laquo;
+                </button>
+              </li>
+
+              {[...Array(totalPages)].map((_, index) => (
+                <li
+                  key={index + 1}
+                  className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
+                >
+                  <button className="page-link" onClick={() => handlePageChange(index + 1)}>
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
+
+              <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
+                  &raquo;
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
