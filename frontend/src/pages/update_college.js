@@ -33,7 +33,10 @@ const UpdateCollege = () => {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ college_code: collegeCode, college_name: collegeName }),
+          body: JSON.stringify({ 
+            college_code: collegeCode.toUpperCase(), 
+            college_name: collegeName 
+          }),
         }
       );
       const result = await res.json();
@@ -68,7 +71,7 @@ const UpdateCollege = () => {
                 type="text"
                 className="form-control"
                 value={collegeCode}
-                onChange={(e) => setCollegeCode(e.target.value)}
+                onChange={(e) => setCollegeCode(e.target.value.toUpperCase())}
                 required
               />
             </div>

@@ -141,7 +141,7 @@ const ManageProgram = () => {
                     className={selectedProgramCode === program.code ? "table-primary" : ""}
                     style={{ cursor: "pointer" }}
                   >
-                    <td>{program.code?.toUpperCase()}</td>
+                    <td>{program.code}</td>
                     <td>{program.name}</td>
                     <td>{program.college}</td>
                   </tr>
