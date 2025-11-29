@@ -148,7 +148,7 @@ const ManageCollege = () => {
                     }
                     style={{ cursor: "pointer" }}
                   >
-                    <td>{college.college_code?.toUpperCase()}</td>
+                    <td>{college.college_code}</td>
                     <td>{college.college_name}</td>
                   </tr>
                 ))

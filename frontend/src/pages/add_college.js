@@ -13,7 +13,11 @@ const AddCollege = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const data = { college_code: collegeCode, college_name: collegeName };
+    // Convert college code to uppercase before sending
+    const data = { 
+      college_code: collegeCode.toUpperCase(), 
+      college_name: collegeName 
+    };
 
     try {
       const res = await fetch("http://127.0.0.1:5000/api/colleges", {
@@ -55,7 +59,7 @@ const AddCollege = () => {
                 className="form-control"
                 placeholder="Enter college code"
                 value={collegeCode}
-                onChange={(e) => setCollegeCode(e.target.value)}
+                onChange={(e) => setCollegeCode(e.target.value.toUpperCase())}
                 required
               />
             </div>
