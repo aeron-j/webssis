@@ -9,11 +9,15 @@ const Sidebar = ({ type, onDelete, studentCount, collegeCount, programCount }) =
   const handleLogout = () => {
     const confirmed = window.confirm("Are you sure you want to logout?");
     if (confirmed) {
+      // Clear all localStorage data
       localStorage.removeItem("username");
       localStorage.removeItem("role");
+      localStorage.removeItem("authToken");
       localStorage.removeItem("selectedStudent");
       localStorage.removeItem("selectedCollege");
       localStorage.removeItem("selectedProgram");
+      
+      // Redirect to login
       navigate("/", { replace: true });
     }
   };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
@@ -12,16 +12,32 @@ const UpdateProgram = () => {
   const [college, setCollege] = useState("");
   const [colleges, setColleges] = useState([]);
   const [message, setMessage] = useState("");
+  const hasChecked = useRef(false); 
 
   useEffect(() => {
-    const storedProgram = JSON.parse(localStorage.getItem("selectedProgram"));
-    if (storedProgram) {
-      setProgramCode(storedProgram.code);
-      setOriginalCode(storedProgram.code);
-      setProgramName(storedProgram.name);
-      setCollege(storedProgram.college);
+    if (hasChecked.current) return;
+    hasChecked.current = true;
+    
+    const storedProgram = localStorage.getItem("selectedProgram");
+    
+    if (!storedProgram) {
+      alert("⚠️ Please select a program from the table first!");
+      navigate("/manage-program", { replace: true });
+      return;
     }
-  }, []);
+
+    try {
+      const program = JSON.parse(storedProgram);
+      setProgramCode(program.code);
+      setOriginalCode(program.code);
+      setProgramName(program.name);
+      setCollege(program.college);
+    } catch (error) {
+      console.error("Error parsing program data:", error);
+      alert("⚠️ Invalid program data. Please select a program again.");
+      navigate("/manage-program", { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/colleges")
@@ -50,14 +66,9 @@ const UpdateProgram = () => {
 
       const result = await res.json();
       if (res.ok) {
-        setMessage(result.message);
-        setOriginalCode(programCode);
-        localStorage.setItem(
-          "selectedProgram",
-          JSON.stringify({ code: programCode, name: programName, college })
-        );
-        window.dispatchEvent(new Event("storage")); 
-        setTimeout(() => navigate("/manage-program"), 1000);
+        localStorage.removeItem("selectedProgram");
+        alert("✅ Program updated successfully!");
+        navigate("/manage-program");
       } else {
         setMessage(result.message || "❌ Failed to update program.");
       }
@@ -65,6 +76,11 @@ const UpdateProgram = () => {
       console.error(error);
       setMessage("⚠️ Could not connect to backend.");
     }
+  };
+
+  const handleCancel = () => {
+    localStorage.removeItem("selectedProgram");
+    navigate("/manage-program");
   };
 
   return (
@@ -122,7 +138,7 @@ const UpdateProgram = () => {
               <button
                 type="button"
                 className="btn btn-secondary me-2"
-                onClick={() => navigate("/manage-program")}
+                onClick={handleCancel}
               >
                 Cancel
               </button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
@@ -9,9 +9,13 @@ const UpdateCollege = () => {
   const [originalCode, setOriginalCode] = useState("");
   const [collegeName, setCollegeName] = useState("");
   const [message, setMessage] = useState("");
+  const hasChecked = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (hasChecked.current) return;
+    hasChecked.current = true;
+
     const storedCollege = JSON.parse(localStorage.getItem("selectedCollege"));
     if (!storedCollege) {
       alert("⚠️ No college selected!");

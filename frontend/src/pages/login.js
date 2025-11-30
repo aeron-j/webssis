@@ -1,52 +1,73 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  // eslint-disable-next-line
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("authToken");
+      if (!token) return;
 
-  if (!username || !password) {
-    setError("Please enter both username and password.");
-    return;
-  }
+      try {
+        const res = await fetch("http://127.0.0.1:5000/api/check-auth", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
 
-  try {
-    const res = await fetch("http://127.0.0.1:5000/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setError("");
-      localStorage.setItem("role", data.role);
-      localStorage.setItem("username", username);
-
-      if (data.role === "admin ") {
-        navigate("/manage-student");
-      } else {
-        navigate("/manage-student"); 
+        if (res.ok) {
+          navigate("/manage-student", { replace: true });
+        } else {
+          localStorage.clear();
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
       }
-    } else {
-      setError(data.message || "Invalid username or password.");
-    }
-  } catch (error) {
-    console.error(error);
-    setError("Failed to connect to the server.");
-  }
-};
+    };
 
+    checkAuth();
+  }, [navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!username || !password) {
+      setError("Please enter both username and password.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("username", username);
+        localStorage.setItem("authToken", data.token); // Save token
+
+        navigate("/manage-student", { replace: true });
+      } else {
+        setError(data.message || "Invalid username or password.");
+      }
+    } catch (error) {
+      console.error(error);
+      setError("Failed to connect to the server.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="information-frame d-flex justify-content-center align-items-center vh-100">
@@ -61,7 +82,6 @@ const Login = () => {
             <input
               type="text"
               className="form-control"
-              name="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -74,7 +94,6 @@ const Login = () => {
             <input
               type="password"
               className="form-control"
-              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -82,7 +101,7 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-100 mt-3" disabled={loading}>
+          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
