@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, useToast } from "../components/Toast";
 
 const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -36,12 +37,11 @@ const Login = () => {
     e.preventDefault();
 
     if (!username || !password) {
-      setError("Please enter both username and password.");
+      addToast("Please enter both username and password", "warning");
       return;
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const res = await fetch("http://127.0.0.1:5000/api/login", {
@@ -55,58 +55,83 @@ const Login = () => {
       if (res.ok) {
         localStorage.setItem("role", data.role);
         localStorage.setItem("username", username);
-        localStorage.setItem("authToken", data.token); // Save token
+        localStorage.setItem("authToken", data.token);
 
-        navigate("/manage-student", { replace: true });
+        addToast("Login successful! Redirecting...", "success");
+        
+        setTimeout(() => {
+          navigate("/manage-student", { replace: true });
+        }, 1000);
       } else {
-        setError(data.message || "Invalid username or password.");
+        addToast(data.error || "Invalid username or password", "error");
       }
     } catch (error) {
       console.error(error);
-      setError("Failed to connect to the server.");
+      addToast("Failed to connect to the server", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="information-frame d-flex justify-content-center align-items-center vh-100">
-      <div className="card p-4 shadow-lg bg-dark text-white" style={{ width: "400px" }}>
-        <h3 className="text-center mb-4">Login</h3>
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <div className="information-frame d-flex justify-content-center align-items-center vh-100">
+        <div className="card p-4 shadow-lg bg-dark text-white" style={{ width: "400px" }}>
+          <h3 className="text-center mb-4">🎓 Student Management System</h3>
+          <p className="text-center text-muted mb-4">Sign in to continue</p>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label">Username</label>
+              <input
+                type="text"
+                className="form-control"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={loading}
+                placeholder="Enter your username"
+              />
+            </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label">Username</label>
-            <input
-              type="text"
-              className="form-control"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
+            <div className="mb-3">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                placeholder="Enter your password"
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn btn-primary w-100" 
               disabled={loading}
-            />
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
+            </button>
+          </form>
+          
+          <div className="text-center mt-3">
+            <small className="text-muted">
+              Session expires after 24 hours
+            </small>
           </div>
-
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-control"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary w-100" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

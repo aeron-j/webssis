@@ -3,6 +3,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/add_student.css"; 
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, useToast } from "../components/Toast";
+import Modal, { useModal } from "../components/Modal";
 
 function UpdateStudent() {
   const [studentId, setStudentId] = useState("");
@@ -15,15 +17,22 @@ function UpdateStudent() {
   const [program, setProgram] = useState("");
   const [colleges, setColleges] = useState([]);
   const [programs, setPrograms] = useState([]);
-  const [message, setMessage] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [existingAvatarUrl, setExistingAvatarUrl] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const hasChecked = useRef(false);
   const navigate = useNavigate();
 
-  // Year level options
+  const { toasts, addToast, removeToast } = useToast();
+  const { isOpen, modalConfig, openModal, closeModal } = useModal();
+
   const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5+ Year"];
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("authToken");
+    return { "Authorization": `Bearer ${token}` };
+  };
 
   // Check if student is selected on mount
   useEffect(() => {
@@ -33,7 +42,7 @@ function UpdateStudent() {
     const storedStudent = localStorage.getItem("selectedStudent");
     
     if (!storedStudent) {
-      alert("⚠️ Please select a student from the table first!");
+      addToast("Please select a student from the table first", "warning");
       navigate("/manage-student", { replace: true });
       return;
     }
@@ -52,54 +61,128 @@ function UpdateStudent() {
       setAvatarPreview(student.avatar_url || null);
     } catch (error) {
       console.error("Error parsing student data:", error);
-      alert("⚠️ Invalid student data. Please select a student again.");
+      addToast("Invalid student data. Please select again", "error");
       navigate("/manage-student", { replace: true });
     }
   }, [navigate]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/colleges")
-      .then((res) => res.json())
-      .then((data) => setColleges(data))
-      .catch((err) => console.error("Error fetching colleges:", err));
+    const fetchData = async () => {
+      try {
+        const [collegesRes, programsRes] = await Promise.all([
+          fetch("http://127.0.0.1:5000/api/colleges", { 
+            headers: getAuthHeaders() 
+          }),
+          fetch("http://127.0.0.1:5000/api/programs", { 
+            headers: getAuthHeaders() 
+          })
+        ]);
 
-    fetch("http://127.0.0.1:5000/api/programs")
-      .then((res) => res.json())
-      .then((data) => setPrograms(data))
-      .catch((err) => console.error("Error fetching programs:", err));
+        if (!collegesRes.ok || !programsRes.ok) {
+          if (collegesRes.status === 401 || programsRes.status === 401) {
+            addToast("Session expired. Please login again", "error");
+            localStorage.clear();
+            navigate("/");
+            return;
+          }
+          throw new Error("Failed to fetch data");
+        }
+
+        const [collegesData, programsData] = await Promise.all([
+          collegesRes.json(),
+          programsRes.json()
+        ]);
+
+        setColleges(collegesData);
+        setPrograms(programsData);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        addToast("Failed to load colleges and programs", "error");
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        alert("❌ Please upload a valid image file (PNG, JPG, GIF, WEBP)");
-        return;
-      }
+    if (!file) return;
 
-      if (file.size > 5 * 1024 * 1024) {
-        alert("❌ Image size must be less than 5MB");
-        return;
-      }
-
-      setAvatarFile(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      addToast("Please upload a valid image file (PNG, JPG, GIF, WEBP)", "error");
+      return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      addToast("Image size must be less than 5MB", "error");
+      return;
+    }
+
+    setAvatarFile(file);
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+    
+    addToast("New photo selected", "success", 2000);
+  };
+
+  const handleRemoveAvatar = async () => {
+    openModal({
+      title: "Remove Profile Photo?",
+      message: "Are you sure you want to remove this student's profile photo? This action cannot be undone.",
+      confirmText: "Yes, Remove",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await fetch(
+            `http://127.0.0.1:5000/api/students/${originalId}/remove-avatar`,
+            {
+              method: "DELETE",
+              headers: {
+                "Authorization": `Bearer ${token}`
+              }
+            }
+          );
+
+          const result = await res.json();
+
+          if (res.ok) {
+            setAvatarPreview(null);
+            setExistingAvatarUrl(null);
+            setAvatarFile(null);
+            addToast(result.message || "Avatar removed successfully", "success");
+          } else {
+            if (res.status === 401) {
+              addToast("Session expired. Please login again", "error");
+              localStorage.clear();
+              navigate("/");
+            } else {
+              addToast(result.error || "Failed to remove avatar", "error");
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          addToast("Could not connect to server", "error");
+        }
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!originalId) {
-      setMessage("⚠️ No student selected for update.");
+      addToast("No student selected for update", "error");
       return;
     }
+
+    setIsSubmitting(true);
 
     const formData = new FormData();
     formData.append("student_id", studentId);
@@ -115,250 +198,324 @@ function UpdateStudent() {
     }
 
     try {
+      const token = localStorage.getItem("authToken");
       const res = await fetch(
         `http://127.0.0.1:5000/api/students/${originalId}`, 
         {
           method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
           body: formData,
         }
       );
 
+      const result = await res.json();
+
       if (res.ok) {
-        const result = await res.json();
-        setMessage(result.message);
+        addToast(result.message || "Student updated successfully", "success");
         localStorage.removeItem("selectedStudent");
         
         setTimeout(() => {
           navigate("/manage-student");
         }, 1500);
       } else {
-        const errorData = await res.json();
-        setMessage(errorData.error || "❌ Failed to update student.");
+        if (res.status === 401) {
+          addToast("Session expired. Please login again", "error");
+          localStorage.clear();
+          navigate("/");
+        } else {
+          addToast(result.error || "Failed to update student", "error");
+        }
       }
     } catch (err) {
       console.error(err);
-      setMessage("⚠️ Could not connect to backend.");
+      addToast("Could not connect to server", "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    localStorage.removeItem("selectedStudent");
-    navigate("/manage-student");
+    openModal({
+      title: "Discard Changes?",
+      message: "Are you sure you want to cancel? All unsaved changes will be lost.",
+      confirmText: "Yes, Discard",
+      cancelText: "No, Keep Editing",
+      type: "warning",
+      onConfirm: () => {
+        localStorage.removeItem("selectedStudent");
+        navigate("/manage-student");
+      }
+    });
   };
 
   return (
-    <div className="row vh-row information-frame">
-      <Sidebar type="student" />
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        type={modalConfig.type}
+      />
+      
+      <div className="row vh-row information-frame">
+        <Sidebar type="student" />
 
-      <div className="col-10 p-4">
-        <h2 className="fw-bold mb-4">Update Student</h2>
+        <div className="col-10 p-4">
+          <h2 className="fw-bold mb-4">Update Student</h2>
 
-        <div className="card shadow-lg p-4">
-          <form onSubmit={handleSubmit}>
-            {/* Avatar Upload */}
-            <div className="text-center mb-4">
+          <div className="card shadow-lg p-4">
+            <form onSubmit={handleSubmit}>
+              {/* Avatar Upload/Remove */}
+              <div className="text-center mb-4">
+                <div className="mb-3">
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar Preview"
+                      className="rounded-circle"
+                      style={{ 
+                        width: "150px", 
+                        height: "150px", 
+                        objectFit: "cover", 
+                        border: "3px solid #dee2e6" 
+                      }}
+                    />
+                  ) : (
+                    <div
+                      className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto"
+                      style={{ 
+                        width: "150px", 
+                        height: "150px", 
+                        border: "3px solid #dee2e6" 
+                      }}
+                    >
+                      <i className="bi bi-person-fill text-white" style={{ fontSize: "80px" }}></i>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="avatar-upload" className="btn btn-outline-warning btn-sm me-2">
+                    📷 Change Photo
+                  </label>
+                  {(avatarPreview || existingAvatarUrl) && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={handleRemoveAvatar}
+                      disabled={isSubmitting}
+                    >
+                      🗑️ Remove Photo
+                    </button>
+                  )}
+                </div>
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                  onChange={handleAvatarChange}
+                  style={{ display: "none" }}
+                  disabled={isSubmitting}
+                />
+                <small className="d-block text-muted mt-2">
+                  Max size: 5MB (PNG, JPG, GIF, WEBP)
+                </small>
+              </div>
+
+              {/* Personal Info */}
+              <h5 className="fw-bold">Personal Information</h5>
+              <hr />
+
               <div className="mb-3">
-                {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="Avatar Preview"
-                    className="rounded-circle"
-                    style={{ width: "150px", height: "150px", objectFit: "cover", border: "3px solid #dee2e6" }}
-                  />
-                ) : (
-                  <div
-                    className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto"
-                    style={{ width: "150px", height: "150px", border: "3px solid #dee2e6" }}
-                  >
-                    <i className="bi bi-person-fill text-white" style={{ fontSize: "80px" }}></i>
-                  </div>
-                )}
-              </div>
-              <label htmlFor="avatar-upload" className="btn btn-outline-warning btn-sm">
-                📷 Change Photo
-              </label>
-              <input
-                id="avatar-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                style={{ display: "none" }}
-              />
-              <small className="d-block text-muted mt-2">Max size: 5MB (PNG, JPG, GIF, WEBP)</small>
-            </div>
-
-            {/* Personal Info */}
-            <h5 className="fw-bold">Personal Information</h5>
-            <hr />
-
-            <div className="mb-3">
-              <label className="form-label">Student ID</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="YYYY-NNNN (e.g., 2025-0001)"
-                value={studentId}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (/^[0-9-]*$/.test(value) && value.length <= 9) {
-                    setStudentId(value);
-                  }
-                }}
-                onBlur={() => {
-                  if (studentId && !/^\d{4}-\d{4}$/.test(studentId)) {
-                    alert("❌ Invalid format! Use YYYY-NNNN (numbers only).");
-                    setStudentId("");
-                  }
-                }}
-                required
-              />
-            </div>
-
-            <div className="row mb-3">
-              <div className="col-md-6">
-                <label className="form-label">First Name</label>
+                <label className="form-label">Student ID</label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Enter first name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label">Last Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter last name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="row mb-4">
-              <div className="col-md-6">
-                <label className="form-label d-block">Gender</label>
-                <div className="form-check form-check-inline">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="gender"
-                    value="Male"
-                    checked={gender === "Male"}
-                    onChange={(e) => setGender(e.target.value)}
-                    required
-                  />
-                  <label className="form-check-label">Male</label>
-                </div>
-                <div className="form-check form-check-inline">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="gender"
-                    value="Female"
-                    checked={gender === "Female"}
-                    onChange={(e) => setGender(e.target.value)}
-                  />
-                  <label className="form-check-label">Female</label>
-                </div>
-              </div>
-            </div>
-
-            {/* Academic Info */}
-            <h5 className="fw-bold mt-4">Academic Information</h5>
-            <hr />
-
-            <div className="row mb-3">
-              <div className="col-md-6">
-                <label className="form-label">Year Level</label>
-                <select
-                  className="form-select"
-                  value={yearLevel}
-                  onChange={(e) => setYearLevel(e.target.value)}
-                  required
-                >
-                  <option value="" disabled hidden>
-                    Select year level...
-                  </option>
-                  {yearLevels.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="row mb-3">
-              <div className="col-md-6">
-                <label className="form-label">College</label>
-                <select
-                  className="form-select"
-                  value={college}
+                  placeholder="YYYY-NNNN (e.g., 2025-0001)"
+                  value={studentId}
                   onChange={(e) => {
-                    setCollege(e.target.value);
-                    setProgram("");
+                    const value = e.target.value;
+                    if (/^[0-9-]*$/.test(value) && value.length <= 9) {
+                      setStudentId(value);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (studentId && !/^\d{4}-\d{4}$/.test(studentId)) {
+                      addToast("Invalid format! Use YYYY-NNNN (numbers only)", "warning");
+                    }
                   }}
                   required
-                >
-                  <option value="" disabled hidden>
-                    Select college...
-                  </option>
-                  {colleges.map((c) => (
-                    <option key={c.college_code} value={c.college_code}>
-                      {c.college_code} - {c.college_name}
-                    </option>
-                  ))}
-                </select>
+                  disabled={isSubmitting}
+                />
               </div>
 
-              <div className="col-md-6">
-                <label className="form-label">Program</label>
-                <select
-                  className="form-select"
-                  value={program}
-                  onChange={(e) => setProgram(e.target.value)}
-                  required
-                >
-                  <option value="" disabled hidden>
-                    Select program...
-                  </option>
-                  {programs
-                    .filter((p) => p.college === college)
-                    .map((p) => (
-                      <option key={p.code} value={p.code}>
-                        {p.code} - {p.name}
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label">First Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Last Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              <div className="row mb-4">
+                <div className="col-md-6">
+                  <label className="form-label d-block">Gender</label>
+                  <div className="form-check form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="gender"
+                      value="Male"
+                      checked={gender === "Male"}
+                      onChange={(e) => setGender(e.target.value)}
+                      required
+                      disabled={isSubmitting}
+                    />
+                    <label className="form-check-label">Male</label>
+                  </div>
+                  <div className="form-check form-check-inline">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="gender"
+                      value="Female"
+                      checked={gender === "Female"}
+                      onChange={(e) => setGender(e.target.value)}
+                      disabled={isSubmitting}
+                    />
+                    <label className="form-check-label">Female</label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Info */}
+              <h5 className="fw-bold mt-4">Academic Information</h5>
+              <hr />
+
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label">Year Level</label>
+                  <select
+                    className="form-select"
+                    value={yearLevel}
+                    onChange={(e) => setYearLevel(e.target.value)}
+                    required
+                    disabled={isSubmitting}
+                  >
+                    <option value="" disabled hidden>
+                      Select year level...
+                    </option>
+                    {yearLevels.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
                       </option>
                     ))}
-                </select>
+                  </select>
+                </div>
               </div>
-            </div>
 
-            {/*  Buttons */}
-            <div className="text-end mt-4">
-              <button
-                type="button"
-                className="btn btn-secondary me-2"
-                onClick={handleCancel}
-              >
-                Cancel
-              </button>
-              <button type="submit" className="btn btn-warning">
-                ✏ Update Student
-              </button>
-            </div>
-          </form>
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label">College</label>
+                  <select
+                    className="form-select"
+                    value={college}
+                    onChange={(e) => {
+                      setCollege(e.target.value);
+                      setProgram("");
+                    }}
+                    required
+                    disabled={isSubmitting}
+                  >
+                    <option value="" disabled hidden>
+                      Select college...
+                    </option>
+                    {colleges.map((c) => (
+                      <option key={c.college_code} value={c.college_code}>
+                        {c.college_code} - {c.college_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          {message && (
-            <div className="alert alert-info mt-3 text-center">{message}</div>
-          )}
+                <div className="col-md-6">
+                  <label className="form-label">Program</label>
+                  <select
+                    className="form-select"
+                    value={program}
+                    onChange={(e) => setProgram(e.target.value)}
+                    required
+                    disabled={isSubmitting || !college}
+                  >
+                    <option value="" disabled hidden>
+                      Select program...
+                    </option>
+                    {programs
+                      .filter((p) => p.college === college)
+                      .map((p) => (
+                        <option key={p.code} value={p.code}>
+                          {p.code} - {p.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="text-end mt-4">
+                <button
+                  type="button"
+                  className="btn btn-secondary me-2"
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-warning"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Updating...
+                    </>
+                  ) : (
+                    "✏ Update Student"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

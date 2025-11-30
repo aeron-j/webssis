@@ -1,12 +1,53 @@
 from flask import Blueprint, jsonify, request
 from db_connection import get_db_connection
 import hashlib
-import secrets
+import jwt
+import datetime
+from functools import wraps
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 user_bp = Blueprint("user", __name__)
 
-# Generate a token when server starts (changes every restart)
-SERVER_TOKEN = secrets.token_hex(16)
+# Secret key for JWT - should be in .env
+JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-this-in-production")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
+
+
+def token_required(f):
+    """Decorator to protect routes that require authentication"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        # Get token from Authorization header
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(" ")[1]  # Bearer <token>
+            except IndexError:
+                return jsonify({"error": "Invalid token format", "authenticated": False}), 401
+        
+        if not token:
+            return jsonify({"error": "Token is missing", "authenticated": False}), 401
+        
+        try:
+            # Decode and verify token
+            data = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            current_user = data['username']
+            current_role = data['role']
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token has expired", "authenticated": False}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token", "authenticated": False}), 401
+        
+        return f(current_user, current_role, *args, **kwargs)
+    
+    return decorated
+
 
 @user_bp.route("/login", methods=["POST"])
 def login():
@@ -15,7 +56,7 @@ def login():
     password = data.get("password")
 
     if not username or not password:
-        return jsonify({"message": "⚠️ Please enter both username and password."}), 400
+        return jsonify({"error": "Please enter both username and password"}), 400
 
     hashed_pw = hashlib.sha256(password.encode()).hexdigest()
 
@@ -30,36 +71,49 @@ def login():
     conn.close()
 
     if user:
-        # Return a token that client must save
+        # Generate JWT token with 24hr expiration
+        expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRATION_HOURS)
+        
+        token = jwt.encode({
+            'username': username,
+            'role': user[0],
+            'exp': expiration
+        }, JWT_SECRET, algorithm=JWT_ALGORITHM)
+        
         return jsonify({
-            "message": "✅ Login successful!", 
+            "message": "Login successful", 
             "role": user[0],
             "username": username,
-            "token": SERVER_TOKEN  # Send token to client
+            "token": token,
+            "expiresIn": JWT_EXPIRATION_HOURS * 3600  # seconds
         })
     else:
-        return jsonify({"message": "❌ Invalid username or password."}), 401
+        return jsonify({"error": "Invalid username or password"}), 401
 
 
 @user_bp.route("/logout", methods=["POST"])
-def logout():
-    return jsonify({"message": "✅ Logged out successfully!"})
+@token_required
+def logout(current_user, current_role):
+    return jsonify({"message": "Logged out successfully"})
 
 
 @user_bp.route("/check-auth", methods=["GET"])
-def check_auth():
-    # Check if client sends the correct token
-    client_token = request.headers.get("Authorization")
-    
-    if client_token == f"Bearer {SERVER_TOKEN}":
-        return jsonify({"authenticated": True})
-    
-    return jsonify({"authenticated": False}), 401
+@token_required
+def check_auth(current_user, current_role):
+    return jsonify({
+        "authenticated": True,
+        "username": current_user,
+        "role": current_role
+    })
 
 
-# Existing routes
 @user_bp.route("/users", methods=["GET"])
-def get_users():
+@token_required
+def get_users(current_user, current_role):
+    # Only admin can view users
+    if current_role != "admin":
+        return jsonify({"error": "Unauthorized access"}), 403
+    
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, username, role FROM users")
@@ -72,14 +126,19 @@ def get_users():
 
 
 @user_bp.route("/users", methods=["POST"])
-def add_user():
+@token_required
+def add_user(current_user, current_role):
+    # Only admin can add users
+    if current_role != "admin":
+        return jsonify({"error": "Unauthorized access"}), 403
+    
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
     role = data.get("role", "staff")
 
     if not username or not password:
-        return jsonify({"message": "⚠️ Username and password are required."}), 400
+        return jsonify({"error": "Username and password are required"}), 400
 
     hashed_pw = hashlib.sha256(password.encode()).hexdigest()
     conn = get_db_connection()
@@ -90,7 +149,7 @@ def add_user():
     if existing:
         cur.close()
         conn.close()
-        return jsonify({"message": "❌ Username already exists."}), 400
+        return jsonify({"error": "Username already exists"}), 400
 
     cur.execute(
         "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
@@ -100,4 +159,4 @@ def add_user():
     cur.close()
     conn.close()
 
-    return jsonify({"message": "✅ User added successfully!"})
+    return jsonify({"message": "User added successfully"})

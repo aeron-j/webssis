@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer, useToast } from "../components/Toast";
+import Modal, { useModal } from "../components/Modal";
 
 const ManageCollege = () => {
   const [colleges, setColleges] = useState([]);
@@ -11,19 +14,42 @@ const ManageCollege = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const collegesPerPage = 10;
 
-  useEffect(() => {
-    fetchColleges();
-  }, []);
+  const navigate = useNavigate();
+  const { toasts, addToast, removeToast } = useToast();
+  const { isOpen, modalConfig, openModal, closeModal } = useModal();
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("authToken");
+    return { "Authorization": `Bearer ${token}` };
+  };
 
   const fetchColleges = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/colleges");
+      const res = await fetch("http://127.0.0.1:5000/api/colleges", {
+        headers: getAuthHeaders()
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          addToast("Session expired. Please login again", "error");
+          localStorage.clear();
+          navigate("/");
+          return;
+        }
+        throw new Error("Failed to fetch colleges");
+      }
+
       const data = await res.json();
       setColleges(data);
     } catch (err) {
       console.error("Error fetching colleges:", err);
+      addToast("Failed to load colleges", "error");
     }
   };
+
+  useEffect(() => {
+    fetchColleges();
+  }, []);
 
   const filteredColleges = colleges
     .filter((college) => {
@@ -61,140 +87,171 @@ const ManageCollege = () => {
 
   const handleDelete = async () => {
     if (!selectedCollegeCode) {
-      alert("Please select a college first!");
+      addToast("Please select a college first", "warning");
       return;
     }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this college?"
-    );
-    if (!confirmed) return;
+    const selectedCollege = colleges.find(c => c.college_code === selectedCollegeCode);
 
-    try {
-      const res = await fetch(
-        `http://127.0.0.1:5000/api/colleges/${selectedCollegeCode}`,
-        { method: "DELETE" }
-      );
+    openModal({
+      title: "Delete College?",
+      message: `Are you sure you want to delete "${selectedCollege?.college_name}" (${selectedCollegeCode})? This will also delete all programs under this college.`,
+      confirmText: "Yes, Delete",
+      cancelText: "Cancel",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(
+            `http://127.0.0.1:5000/api/colleges/${selectedCollegeCode}`,
+            { 
+              method: "DELETE",
+              headers: getAuthHeaders()
+            }
+          );
 
-      if (res.ok) {
-        setColleges((prev) =>
-          prev.filter((c) => c.college_code !== selectedCollegeCode)
-        );
-        setSelectedCollegeCode(null);
-        localStorage.removeItem("selectedCollege");
-        alert("College deleted successfully!");
-      } else {
-        alert("Failed to delete college.");
+          const result = await res.json();
+
+          if (res.ok) {
+            addToast(result.message || "College deleted successfully", "success");
+            setColleges((prev) =>
+              prev.filter((c) => c.college_code !== selectedCollegeCode)
+            );
+            setSelectedCollegeCode(null);
+            localStorage.removeItem("selectedCollege");
+          } else {
+            if (res.status === 401) {
+              addToast("Session expired. Please login again", "error");
+              localStorage.clear();
+              navigate("/");
+            } else {
+              addToast(result.error || "Failed to delete college", "error");
+            }
+          }
+        } catch (error) {
+          console.error(error);
+          addToast("Could not connect to server", "error");
+        }
       }
-    } catch (error) {
-      console.error(error);
-      alert("Could not connect to backend.");
-    }
+    });
   };
 
   return (
-    <div className="row information-frame">
-      <Sidebar type="college" onDelete={handleDelete} collegeCount={colleges.length}/>
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        type={modalConfig.type}
+      />
 
-      <div className="col-10 bg-gradient p-4">
-        <h2 className="fw-bold mb-4">Manage College</h2>
+      <div className="row information-frame">
+        <Sidebar type="college" onDelete={handleDelete} collegeCount={colleges.length}/>
 
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <input
-            type="text"
-            className="form-control w-50"
-            placeholder="🔍 Search College..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1); // Reset to first page on search
-            }}
-          />
+        <div className="col-10 bg-gradient p-4">
+          <h2 className="fw-bold mb-4">Manage College</h2>
 
-          <select
-            className="form-select w-25"
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-              setCurrentPage(1); // Reset to first page on sort
-            }}
-          >
-            <option value="" disabled hidden>
-              Sort By
-            </option>
-            <option value="code">College Code</option>
-            <option value="name">College Name</option>
-          </select>
-        </div>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <input
+              type="text"
+              className="form-control w-50"
+              placeholder="🔍 Search College..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
+            />
+
+            <select
+              className="form-select w-25"
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setCurrentPage(1); // Reset to first page on sort
+              }}
+            >
+              <option value="" disabled hidden>
+                Sort By
+              </option>
+              <option value="code">College Code</option>
+              <option value="name">College Name</option>
+            </select>
+          </div>
         
-        <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px" }}>
-          <table className="table table-dark table-striped mb-0">
-            <thead>
-              <tr>
-                <th>College Code</th>
-                <th>College Name</th>
-              </tr>
-            </thead>
-            <tbody style={{ minHeight: "400px" }}>
-              {currentColleges.length > 0 ? (
-                currentColleges.map((college, index) => (
-                  <tr
-                    key={index}
-                    onClick={() => handleRowClick(college)}
-                    className={
-                      selectedCollegeCode === college.college_code
-                        ? "table-primary"
-                        : ""
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{college.college_code}</td>
-                    <td>{college.college_name}</td>
-                  </tr>
-                ))
-              ) : (
+          <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px" }}>
+            <table className="table table-dark table-striped mb-0">
+              <thead>
                 <tr>
-                  <td colSpan="2" className="text-center text-muted">
-                    No colleges found.
-                  </td>
+                  <th>College Code</th>
+                  <th>College Name</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody style={{ minHeight: "400px" }}>
+                {currentColleges.length > 0 ? (
+                  currentColleges.map((college, index) => (
+                    <tr
+                      key={index}
+                      onClick={() => handleRowClick(college)}
+                      className={
+                        selectedCollegeCode === college.college_code
+                          ? "table-primary"
+                          : ""
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      <td>{college.college_code}</td>
+                      <td>{college.college_name}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="2" className="text-center text-muted">
+                      No colleges found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
 
-          {/* Pagination */}
-          <div
-            className="d-flex justify-content-center align-items-center py-3 bg-transparent position-absolute w-100"
-            style={{ bottom: 0, left: 0 }}
-          >
-            <ul className="pagination mb-0">
-              <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                  &laquo;
-                </button>
-              </li>
-
-              {[...Array(totalPages)].map((_, index) => (
-                <li
-                  key={index + 1}
-                  className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
-                >
-                  <button className="page-link" onClick={() => handlePageChange(index + 1)}>
-                    {index + 1}
+            {/* Pagination */}
+            <div
+              className="d-flex justify-content-center align-items-center py-3 bg-transparent position-absolute w-100"
+              style={{ bottom: 0, left: 0 }}
+            >
+              <ul className="pagination mb-0">
+                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                  <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
+                    &laquo;
                   </button>
                 </li>
-              ))}
 
-              <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                  &raquo;
-                </button>
-              </li>
-            </ul>
+                {[...Array(totalPages)].map((_, index) => (
+                  <li
+                    key={index + 1}
+                    className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
+                  >
+                    <button className="page-link" onClick={() => handlePageChange(index + 1)}>
+                      {index + 1}
+                    </button>
+                  </li>
+                ))}
+
+                <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                  <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
+                    &raquo;
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
