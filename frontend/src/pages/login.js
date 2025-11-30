@@ -78,8 +78,7 @@ const Login = () => {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <div className="information-frame d-flex justify-content-center align-items-center vh-100">
         <div className="card p-4 shadow-lg bg-dark text-white" style={{ width: "400px" }}>
-          <h3 className="text-center mb-4">🎓 Student Management System</h3>
-          <p className="text-center text-muted mb-4">Sign in to continue</p>
+          <h3 className="text-center mb-4"> Student Management System</h3>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
@@ -124,11 +123,6 @@ const Login = () => {
             </button>
           </form>
           
-          <div className="text-center mt-3">
-            <small className="text-muted">
-              Session expires after 24 hours
-            </small>
-          </div>
         </div>
       </div>
     </>

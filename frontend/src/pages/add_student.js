@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import Sidebar from "../components/sidebar";
 import "../styles/add_student.css";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +9,7 @@ import Modal, { useModal } from "../components/Modal";
 
 function AddStudent() {
   const [studentId, setStudentId] = useState("");
+  const [studentIdError, setStudentIdError] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState("");
@@ -69,6 +71,41 @@ function AddStudent() {
     fetchData();
   }, []);
 
+  const validateStudentId = (value) => {
+    // If empty, no error
+    if (!value) {
+      setStudentIdError("");
+      return true;
+    }
+
+    // Check format: YYYY-NNNN (exactly 4 digits, dash, 4 digits)
+    const validFormat = /^\d{4}-\d{4}$/;
+    
+    if (!validFormat.test(value)) {
+      setStudentIdError("Format must be YYYY-NNNN (e.g., 2025-0001)");
+      return false;
+    }
+
+    setStudentIdError("");
+    return true;
+  };
+
+  const handleStudentIdChange = (e) => {
+    const value = e.target.value;
+    
+    // Allow only numbers and dash, max 9 characters (YYYY-NNNN)
+    if (/^[0-9-]*$/.test(value) && value.length <= 9) {
+      setStudentId(value);
+      
+      // Validate in real-time if they've entered something
+      if (value.length > 0) {
+        validateStudentId(value);
+      } else {
+        setStudentIdError("");
+      }
+    }
+  };
+
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -101,6 +138,12 @@ function AddStudent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Final validation before submit
+    if (!validateStudentId(studentId)) {
+      addToast("Please enter a valid Student ID (YYYY-NNNN)", "error");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const formData = new FormData();
@@ -132,6 +175,7 @@ function AddStudent() {
 
         // Reset form
         setStudentId("");
+        setStudentIdError("");
         setFirstName("");
         setLastName("");
         setGender("");
@@ -228,7 +272,7 @@ function AddStudent() {
                   )}
                 </div>
                 <label htmlFor="avatar-upload" className="btn btn-outline-primary btn-sm">
-                  📷 Upload Photo
+                  <i className="bi bi-camera me-2"></i>Upload Photo
                 </label>
                 <input
                   id="avatar-upload"
@@ -238,7 +282,7 @@ function AddStudent() {
                   style={{ display: "none" }}
                   disabled={isSubmitting}
                 />
-                <small className="d-block text-muted mt-2">
+                <small className="d-block mt-2">
                   Max size: 5MB (PNG, JPG, GIF, WEBP)
                 </small>
               </div>
@@ -248,27 +292,24 @@ function AddStudent() {
               <hr />
 
               <div className="mb-3">
-                <label className="form-label">Student ID</label>
+                <label className="form-label">
+                  Student ID <span className="text-danger">*</span>
+                </label>
                 <input
                   type="text"
-                  className="form-control"
+                  className={`form-control ${studentIdError ? 'is-invalid' : ''}`}
                   placeholder="YYYY-NNNN (e.g., 2025-0001)"
                   value={studentId}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^[0-9-]*$/.test(value) && value.length <= 9) {
-                      setStudentId(value);
-                    }
-                  }}
-                  onBlur={() => {
-                    if (studentId && !/^\d{4}-\d{4}$/.test(studentId)) {
-                      addToast("Invalid format! Use YYYY-NNNN (numbers only)", "warning");
-                      setStudentId("");
-                    }
-                  }}
+                  onChange={handleStudentIdChange}
                   required
                   disabled={isSubmitting}
                 />
+                {studentIdError && (
+                  <div className="invalid-feedback d-block">
+                    <i className="bi bi-exclamation-circle me-1"></i>
+                    {studentIdError}
+                  </div>
+                )}
               </div>
 
               <div className="row mb-3">
@@ -414,7 +455,7 @@ function AddStudent() {
                 <button 
                   type="submit" 
                   className="btn btn-success"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || studentIdError}
                 >
                   {isSubmitting ? (
                     <>
@@ -422,7 +463,9 @@ function AddStudent() {
                       Adding...
                     </>
                   ) : (
-                    "+ Add Student"
+                    <>
+                      <i className="bi bi-plus-circle me-2"></i>Add Student
+                    </>
                   )}
                 </button>
               </div>

@@ -1,73 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import './Toast.css';
 
-const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
-  const [isVisible, setIsVisible] = useState(true);
+// Toast Hook
+export const useToast = () => {
+  const [toasts, setToasts] = useState([]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      if (onClose) onClose();
-    }, duration);
+  const addToast = useCallback((message, type = 'success', duration = 3000) => {
+    const id = Date.now() + Math.random();
+    const newToast = { id, message, type, duration };
+    
+    setToasts(prev => [...prev, newToast]);
 
-    return () => clearTimeout(timer);
-  }, [duration, onClose]);
-
-  if (!isVisible) return null;
-
-  const getIcon = () => {
-    switch (type) {
-      case 'success':
-        return '✓';
-      case 'error':
-        return '✕';
-      case 'warning':
-        return '⚠';
-      default:
-        return 'ℹ';
+    // Auto remove after duration
+    if (duration > 0) {
+      setTimeout(() => {
+        removeToast(id);
+      }, duration);
     }
-  };
+  }, []);
 
-  const getColorClass = () => {
-    switch (type) {
-      case 'success':
-        return 'toast-success';
-      case 'error':
-        return 'toast-error';
-      case 'warning':
-        return 'toast-warning';
-      default:
-        return 'toast-info';
-    }
-  };
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
 
-  return (
-    <div className={`toast ${getColorClass()} ${isVisible ? 'toast-show' : 'toast-hide'}`}>
-      <div className="toast-icon">{getIcon()}</div>
-      <div className="toast-message">{message}</div>
-      <button 
-        className="toast-close" 
-        onClick={() => {
-          setIsVisible(false);
-          if (onClose) onClose();
-        }}
-      >
-        ×
-      </button>
-    </div>
-  );
+  return { toasts, addToast, removeToast };
 };
 
-// Toast Container to manage multiple toasts
+// Toast Container Component
 export const ToastContainer = ({ toasts, removeToast }) => {
+  if (!toasts || toasts.length === 0) return null;
+
   return (
-    <div className="toast-container">
+    <div className="toast-container position-fixed top-0 end-0 p-3" style={{ zIndex: 9999 }}>
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
           message={toast.message}
           type={toast.type}
-          duration={toast.duration}
           onClose={() => removeToast(toast.id)}
         />
       ))}
@@ -75,20 +46,63 @@ export const ToastContainer = ({ toasts, removeToast }) => {
   );
 };
 
-// Hook to use toasts
-export const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-
-  const addToast = (message, type = 'info', duration = 3000) => {
-    const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type, duration }]);
+// Individual Toast Component
+const Toast = ({ message, type, onClose }) => {
+  const getToastConfig = () => {
+    switch (type) {
+      case 'success':
+        return {
+          bg: 'bg-success',
+          icon: 'bi-check-circle-fill',
+          title: 'Success'
+        };
+      case 'error':
+        return {
+          bg: 'bg-danger',
+          icon: 'bi-exclamation-circle-fill',
+          title: 'Error'
+        };
+      case 'warning':
+        return {
+          bg: 'bg-warning',
+          icon: 'bi-exclamation-triangle-fill',
+          title: 'Warning',
+          textClass: 'text-dark'
+        };
+      case 'info':
+        return {
+          bg: 'bg-info',
+          icon: 'bi-info-circle-fill',
+          title: 'Info'
+        };
+      default:
+        return {
+          bg: 'bg-secondary',
+          icon: 'bi-bell-fill',
+          title: 'Notification'
+        };
+    }
   };
 
-  const removeToast = (id) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
+  const config = getToastConfig();
 
-  return { toasts, addToast, removeToast };
+  return (
+    <div className={`toast show ${config.bg} ${config.textClass || 'text-white'} mb-2`} role="alert">
+      <div className="toast-header">
+        <i className={`bi ${config.icon} me-2`}></i>
+        <strong className="me-auto">{config.title}</strong>
+        <button
+          type="button"
+          className="btn-close"
+          onClick={onClose}
+          aria-label="Close"
+        ></button>
+      </div>
+      <div className="toast-body">
+        {message}
+      </div>
+    </div>
+  );
 };
 
-export default Toast;
+export default ToastContainer;

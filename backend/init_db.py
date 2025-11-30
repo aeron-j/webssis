@@ -18,7 +18,7 @@ def init_db():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS programs (
         id SERIAL PRIMARY KEY,
-        program_code VARCHAR(10) UNIQUE NOT NULL,
+        program_code VARCHAR(20) UNIQUE NOT NULL,
         program_name VARCHAR(100) NOT NULL,
         college VARCHAR(10) REFERENCES colleges(college_code) ON DELETE CASCADE
     );
@@ -33,7 +33,7 @@ def init_db():
         last_name VARCHAR(100) NOT NULL,
         gender VARCHAR(10) NOT NULL,
         year_level VARCHAR(20) NOT NULL,
-        course VARCHAR(10) REFERENCES programs(program_code) ON DELETE SET NULL,
+        course VARCHAR(20) REFERENCES programs(program_code) ON DELETE SET NULL,
         avatar_url TEXT
     );
     """)

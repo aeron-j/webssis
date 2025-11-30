@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +10,7 @@ import Modal, { useModal } from "../components/Modal";
 const ManageCollege = () => {
   const [colleges, setColleges] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [selectedCollegeCode, setSelectedCollegeCode] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const collegesPerPage = 10;
@@ -51,6 +52,28 @@ const ManageCollege = () => {
     fetchColleges();
   }, []);
 
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === 'asc') direction = 'desc';
+      else if (sortConfig.direction === 'desc') direction = null;
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1);
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <i className="bi bi-arrow-down-up ms-2" style={{fontSize: "0.8rem"}}></i>;
+    }
+    if (sortConfig.direction === 'asc') {
+      return <i className="bi bi-arrow-up ms-2" style={{fontSize: "0.8rem"}}></i>;
+    } else if (sortConfig.direction === 'desc') {
+      return <i className="bi bi-arrow-down ms-2" style={{fontSize: "0.8rem"}}></i>;
+    }
+    return <i className="bi bi-arrow-down-up ms-2" style={{fontSize: "0.8rem"}}></i>;
+  };
+
   const filteredColleges = colleges
     .filter((college) => {
       if (!searchTerm) return true;
@@ -61,12 +84,13 @@ const ManageCollege = () => {
       );
     })
     .sort((a, b) => {
-      if (sortBy === "code") return a.college_code.localeCompare(b.college_code);
-      if (sortBy === "name") return a.college_name.localeCompare(b.college_name);
-      return 0;
+      if (!sortConfig.key || !sortConfig.direction) return 0;
+      const aValue = a[sortConfig.key] || "";
+      const bValue = b[sortConfig.key] || "";
+      const comparison = aValue.toString().localeCompare(bValue.toString());
+      return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredColleges.length / collegesPerPage);
   const indexOfLastCollege = currentPage * collegesPerPage;
   const indexOfFirstCollege = indexOfLastCollege - collegesPerPage;
@@ -87,7 +111,7 @@ const ManageCollege = () => {
 
   const handleDelete = async () => {
     if (!selectedCollegeCode) {
-      addToast("Please select a college first", "warning");
+      addToast("Please select a college to delete", "warning");
       return;
     }
 
@@ -135,6 +159,38 @@ const ManageCollege = () => {
     });
   };
 
+  // Generate page numbers with ellipsis
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (currentPage <= 3) {
+        pages.push(2, 3, 4);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push('...');
+        pages.push(totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push('...');
+        pages.push(currentPage - 1, currentPage, currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
   return (
     <>
       <ToastContainer toasts={toasts} removeToast={removeToast} />
@@ -156,39 +212,39 @@ const ManageCollege = () => {
           <h2 className="fw-bold mb-4">Manage College</h2>
 
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <input
-              type="text"
-              className="form-control w-50"
-              placeholder="🔍 Search College..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on search
-              }}
-            />
-
-            <select
-              className="form-select w-25"
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value);
-                setCurrentPage(1); // Reset to first page on sort
-              }}
-            >
-              <option value="" disabled hidden>
-                Sort By
-              </option>
-              <option value="code">College Code</option>
-              <option value="name">College Name</option>
-            </select>
+            <div className="input-group w-50">
+              <span className="input-group-text">
+                <i className="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search College..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
           </div>
         
-          <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px" }}>
+          <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px", paddingBottom: "70px" }}>
             <table className="table table-dark table-striped mb-0">
               <thead>
                 <tr>
-                  <th>College Code</th>
-                  <th>College Name</th>
+                  <th 
+                    onClick={() => handleSort('college_code')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    College Code {getSortIcon('college_code')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('college_name')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    College Name {getSortIcon('college_name')}
+                  </th>
                 </tr>
               </thead>
               <tbody style={{ minHeight: "400px" }}>
@@ -210,7 +266,7 @@ const ManageCollege = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="2" className="text-center text-muted">
+                    <td colSpan="2" className="text-center">
                       No colleges found.
                     </td>
                   </tr>
@@ -218,7 +274,6 @@ const ManageCollege = () => {
               </tbody>
             </table>
 
-            {/* Pagination */}
             <div
               className="d-flex justify-content-center align-items-center py-3 bg-transparent position-absolute w-100"
               style={{ bottom: 0, left: 0 }}
@@ -226,24 +281,34 @@ const ManageCollege = () => {
               <ul className="pagination mb-0">
                 <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                   <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                    &laquo;
+                    <i className="bi bi-chevron-left"></i>
                   </button>
                 </li>
 
-                {[...Array(totalPages)].map((_, index) => (
-                  <li
-                    key={index + 1}
-                    className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
-                  >
-                    <button className="page-link" onClick={() => handlePageChange(index + 1)}>
-                      {index + 1}
-                    </button>
-                  </li>
-                ))}
+                {pageNumbers.map((page, index) => {
+                  if (page === '...') {
+                    return (
+                      <li key={`ellipsis-${index}`} className="page-item disabled">
+                        <span className="page-link">...</span>
+                      </li>
+                    );
+                  }
+
+                  return (
+                    <li
+                      key={page}
+                      className={`page-item ${currentPage === page ? "active" : ""}`}
+                    >
+                      <button className="page-link" onClick={() => handlePageChange(page)}>
+                        {page}
+                      </button>
+                    </li>
+                  );
+                })}
 
                 <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
                   <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                    &raquo;
+                    <i className="bi bi-chevron-right"></i>
                   </button>
                 </li>
               </ul>

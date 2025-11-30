@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import Sidebar from "../components/sidebar";
 import "../styles/background.css";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +10,7 @@ import Modal, { useModal } from "../components/Modal";
 const ManageProgram = () => {
   const [programs, setPrograms] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [selectedProgramCode, setSelectedProgramCode] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const programsPerPage = 10;
@@ -54,6 +55,28 @@ const ManageProgram = () => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === 'asc') direction = 'desc';
+      else if (sortConfig.direction === 'desc') direction = null;
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1);
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <i className="bi bi-arrow-down-up ms-2" style={{fontSize: "0.8rem"}}></i>;
+    }
+    if (sortConfig.direction === 'asc') {
+      return <i className="bi bi-arrow-up ms-2" style={{fontSize: "0.8rem"}}></i>;
+    } else if (sortConfig.direction === 'desc') {
+      return <i className="bi bi-arrow-down ms-2" style={{fontSize: "0.8rem"}}></i>;
+    }
+    return <i className="bi bi-arrow-down-up ms-2" style={{fontSize: "0.8rem"}}></i>;
+  };
+
   const filteredPrograms = programs
     .filter((p) => {
       const term = searchTerm.toLowerCase();
@@ -64,13 +87,13 @@ const ManageProgram = () => {
       );
     })
     .sort((a, b) => {
-      if (sortBy === "code") return a.code.localeCompare(b.code);
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      if (sortBy === "college") return a.college.localeCompare(b.college);
-      return 0;
+      if (!sortConfig.key || !sortConfig.direction) return 0;
+      const aValue = a[sortConfig.key] || "";
+      const bValue = b[sortConfig.key] || "";
+      const comparison = aValue.toString().localeCompare(bValue.toString());
+      return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredPrograms.length / programsPerPage);
   const indexOfLastProgram = currentPage * programsPerPage;
   const indexOfFirstProgram = indexOfLastProgram - programsPerPage;
@@ -136,6 +159,38 @@ const ManageProgram = () => {
     });
   };
 
+  // Generate page numbers with ellipsis
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (currentPage <= 3) {
+        pages.push(2, 3, 4);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push('...');
+        pages.push(totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push('...');
+        pages.push(currentPage - 1, currentPage, currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
   return (
     <>
       <ToastContainer toasts={toasts} removeToast={removeToast} />
@@ -157,38 +212,45 @@ const ManageProgram = () => {
           <h2 className="fw-bold mb-4">Manage Program</h2>
 
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <input
-              type="text"
-              className="form-control w-50"
-              placeholder="🔍 Search Program..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on search
-              }}
-            />
-            <select
-              className="form-select w-25"
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value);
-                setCurrentPage(1); // Reset to first page on sort
-              }}
-            >
-              <option value="" disabled hidden>Sort By</option>
-              <option value="code">Program Code</option>
-              <option value="name">Program</option>
-              <option value="college">College</option>
-            </select>
+            <div className="input-group w-50">
+              <span className="input-group-text">
+                <i className="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search Program..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
           </div>
 
-          <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px" }}>
+          <div className="table-responsive position-relative table-wrapper" style={{ minHeight: "500px", paddingBottom: "70px" }}>
             <table className="table table-dark table-striped mb-0">
               <thead>
                 <tr>
-                  <th>Program Code</th>
-                  <th>Program</th>
-                  <th>College</th>
+                  <th 
+                    onClick={() => handleSort('code')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    Program Code {getSortIcon('code')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('name')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    Program {getSortIcon('name')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('college')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    College {getSortIcon('college')}
+                  </th>
                 </tr>
               </thead>
               <tbody style={{ minHeight: "400px" }}>
@@ -207,13 +269,12 @@ const ManageProgram = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="3" className="text-center text-muted">No programs found.</td>
+                    <td colSpan="3" className="text-center">No programs found.</td>
                   </tr>
                 )}
               </tbody>
             </table>
 
-            {/* Pagination */}
             <div
               className="d-flex justify-content-center align-items-center py-3 bg-transparent position-absolute w-100"
               style={{ bottom: 0, left: 0 }}
@@ -221,24 +282,34 @@ const ManageProgram = () => {
               <ul className="pagination mb-0">
                 <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                   <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                    &laquo;
+                    <i className="bi bi-chevron-left"></i>
                   </button>
                 </li>
 
-                {[...Array(totalPages)].map((_, index) => (
-                  <li
-                    key={index + 1}
-                    className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
-                  >
-                    <button className="page-link" onClick={() => handlePageChange(index + 1)}>
-                      {index + 1}
-                    </button>
-                  </li>
-                ))}
+                {pageNumbers.map((page, index) => {
+                  if (page === '...') {
+                    return (
+                      <li key={`ellipsis-${index}`} className="page-item disabled">
+                        <span className="page-link">...</span>
+                      </li>
+                    );
+                  }
+
+                  return (
+                    <li
+                      key={page}
+                      className={`page-item ${currentPage === page ? "active" : ""}`}
+                    >
+                      <button className="page-link" onClick={() => handlePageChange(page)}>
+                        {page}
+                      </button>
+                    </li>
+                  );
+                })}
 
                 <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
                   <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                    &raquo;
+                    <i className="bi bi-chevron-right"></i>
                   </button>
                 </li>
               </ul>

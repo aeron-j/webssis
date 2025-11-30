@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 from flask_cors import CORS
 from routes.college_routes import college_bp
 from routes.program_routes import program_bp
@@ -10,11 +10,9 @@ import os
 app = Flask(__name__, static_folder='static', static_url_path='')
 
 # CORS configuration
-# In development, allow all origins
-# In production, specify your domain
 CORS(app, resources={
     r"/api/*": {
-        "origins": "*",  # Change to your domain in production
+        "origins": "*",
         "methods": ["GET", "POST", "PUT", "DELETE"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
@@ -31,31 +29,44 @@ app.register_blueprint(user_bp, url_prefix="/api")
 def health_check():
     return {"status": "healthy", "message": "Flask backend is running"}
 
-# Serve React App (for production)
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    # If path starts with 'api/', let Flask handle it
-    if path.startswith('api/'):
+# Serve React index.html at root
+@app.route('/')
+def serve_root():
+    if not os.path.exists(app.static_folder):
+        return {
+            "message": "React build not found. Run 'npm run build' in frontend directory.",
+            "tip": "In development, run React dev server separately with 'npm start'"
+        }, 200
+    return send_from_directory(app.static_folder, 'index.html')
+
+# Serve static files
+@app.route('/<path:filename>')
+def serve_static_files(filename):
+    # Check if file exists in static folder
+    file_path = os.path.join(app.static_folder, filename)
+    
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return send_from_directory(app.static_folder, filename)
+    
+    # If file doesn't exist and it's not an API call, serve index.html (React Router)
+    if not filename.startswith('api/'):
+        return send_from_directory(app.static_folder, 'index.html')
+    
+    # API endpoint not found
+    return {"error": "API endpoint not found"}, 404
+
+# Error handler for 404 - serve React app for any unmatched routes
+@app.errorhandler(404)
+def not_found(e):
+    # If it's an API request that failed, return JSON error
+    if request.path.startswith('/api/'):
         return {"error": "API endpoint not found"}, 404
     
-    # If static folder exists and has index.html (production build)
-    if os.path.exists(app.static_folder):
-        # Check if the specific file exists
-        file_path = os.path.join(app.static_folder, path)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return send_from_directory(app.static_folder, path)
-        
-        # For React Router, always serve index.html
-        index_path = os.path.join(app.static_folder, 'index.html')
-        if os.path.exists(index_path):
-            return send_from_directory(app.static_folder, 'index.html')
+    # Otherwise serve index.html for React Router
+    if os.path.exists(os.path.join(app.static_folder, 'index.html')):
+        return send_from_directory(app.static_folder, 'index.html')
     
-    # If no static folder (development mode)
-    return {
-        "message": "React build not found. Run 'npm run build' in frontend directory.",
-        "tip": "In development, run React dev server separately with 'npm start'"
-    }, 200
+    return {"message": "React build not found"}, 404
 
 if __name__ == "__main__":
     # Check if we're in development or production
