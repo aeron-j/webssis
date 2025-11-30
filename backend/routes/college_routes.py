@@ -1,46 +1,8 @@
 from flask import Blueprint, jsonify, request
 from db_connection import get_db_connection
-import jwt
-from functools import wraps
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from auth_utils import token_required
 
 college_bp = Blueprint("college_bp", __name__)
-
-JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-this-in-production")
-JWT_ALGORITHM = "HS256"
-
-
-def token_required(f):
-    """Decorator to protect routes that require authentication"""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            try:
-                token = auth_header.split(" ")[1]
-            except IndexError:
-                return jsonify({"error": "Invalid token format"}), 401
-        
-        if not token:
-            return jsonify({"error": "Authentication required"}), 401
-        
-        try:
-            data = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            current_user = data['username']
-            current_role = data['role']
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "Session expired. Please login again"}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "Invalid authentication token"}), 401
-        
-        return f(current_user, current_role, *args, **kwargs)
-    
-    return decorated
 
 
 @college_bp.route("/colleges", methods=["GET"])

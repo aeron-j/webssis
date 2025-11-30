@@ -1,52 +1,9 @@
 from flask import Blueprint, jsonify, request
 from db_connection import get_db_connection
 import hashlib
-import jwt
-import datetime
-from functools import wraps
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from auth_utils import token_required, admin_required, generate_token, JWT_EXPIRATION_HOURS
 
 user_bp = Blueprint("user", __name__)
-
-# Secret key for JWT - should be in .env
-JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-this-in-production")
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = 24
-
-
-def token_required(f):
-    """Decorator to protect routes that require authentication"""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        
-        # Get token from Authorization header
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            try:
-                token = auth_header.split(" ")[1]  # Bearer <token>
-            except IndexError:
-                return jsonify({"error": "Invalid token format", "authenticated": False}), 401
-        
-        if not token:
-            return jsonify({"error": "Token is missing", "authenticated": False}), 401
-        
-        try:
-            # Decode and verify token
-            data = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            current_user = data['username']
-            current_role = data['role']
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "Token has expired", "authenticated": False}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "Invalid token", "authenticated": False}), 401
-        
-        return f(current_user, current_role, *args, **kwargs)
-    
-    return decorated
 
 
 @user_bp.route("/login", methods=["POST"])
@@ -71,14 +28,8 @@ def login():
     conn.close()
 
     if user:
-        # Generate JWT token with 24hr expiration
-        expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRATION_HOURS)
-        
-        token = jwt.encode({
-            'username': username,
-            'role': user[0],
-            'exp': expiration
-        }, JWT_SECRET, algorithm=JWT_ALGORITHM)
+        # Generate JWT token using centralized function
+        token = generate_token(username, user[0])
         
         return jsonify({
             "message": "Login successful", 
@@ -108,12 +59,9 @@ def check_auth(current_user, current_role):
 
 
 @user_bp.route("/users", methods=["GET"])
-@token_required
+@admin_required
 def get_users(current_user, current_role):
-    # Only admin can view users
-    if current_role != "admin":
-        return jsonify({"error": "Unauthorized access"}), 403
-    
+    """Only admin can view users"""
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, username, role FROM users")
@@ -126,12 +74,9 @@ def get_users(current_user, current_role):
 
 
 @user_bp.route("/users", methods=["POST"])
-@token_required
+@admin_required
 def add_user(current_user, current_role):
-    # Only admin can add users
-    if current_role != "admin":
-        return jsonify({"error": "Unauthorized access"}), 403
-    
+    """Only admin can add users"""
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")

@@ -13,6 +13,7 @@ __pycache__/
 instance/
 venv/
 *.sqlite3
+static/ 
 
 # ==========================
 # Environment / Config
