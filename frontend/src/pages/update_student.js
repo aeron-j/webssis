@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "../components/sidebar";
 import "../styles/add_student.css"; 
@@ -19,10 +19,43 @@ function UpdateStudent() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [existingAvatarUrl, setExistingAvatarUrl] = useState(null);
+  const hasChecked = useRef(false);
   const navigate = useNavigate();
 
   // Year level options
   const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5+ Year"];
+
+  // Check if student is selected on mount
+  useEffect(() => {
+    if (hasChecked.current) return;
+    hasChecked.current = true;
+
+    const storedStudent = localStorage.getItem("selectedStudent");
+    
+    if (!storedStudent) {
+      alert("⚠️ Please select a student from the table first!");
+      navigate("/manage-student", { replace: true });
+      return;
+    }
+
+    try {
+      const student = JSON.parse(storedStudent);
+      setStudentId(student.student_id);
+      setOriginalId(student.id); 
+      setFirstName(student.first_name);
+      setLastName(student.last_name);
+      setGender(student.gender);
+      setYearLevel(student.year_level || "");
+      setCollege(student.college || "");
+      setProgram(student.course || "");
+      setExistingAvatarUrl(student.avatar_url || null);
+      setAvatarPreview(student.avatar_url || null);
+    } catch (error) {
+      console.error("Error parsing student data:", error);
+      alert("⚠️ Invalid student data. Please select a student again.");
+      navigate("/manage-student", { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/colleges")
@@ -34,22 +67,6 @@ function UpdateStudent() {
       .then((res) => res.json())
       .then((data) => setPrograms(data))
       .catch((err) => console.error("Error fetching programs:", err));
-  }, []);
-
-  useEffect(() => {
-    const storedStudent = JSON.parse(localStorage.getItem("selectedStudent"));
-    if (storedStudent) {
-      setStudentId(storedStudent.student_id);
-      setOriginalId(storedStudent.id); 
-      setFirstName(storedStudent.first_name);
-      setLastName(storedStudent.last_name);
-      setGender(storedStudent.gender);
-      setYearLevel(storedStudent.year_level || "");
-      setCollege(storedStudent.college || "");
-      setProgram(storedStudent.course || "");
-      setExistingAvatarUrl(storedStudent.avatar_url || null);
-      setAvatarPreview(storedStudent.avatar_url || null);
-    }
   }, []);
 
   const handleAvatarChange = (e) => {
