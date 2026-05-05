@@ -1,10 +1,10 @@
-# 🌐 Web-based Student Information System (WebSSIS)
+# Web-based Student Information System (WebSSIS)
 
 The final and most complete version of the Student Information System — rebuilt as a full-stack web application with a **Flask + React** architecture, **PostgreSQL** database, and **Supabase** for cloud-based student photo storage.
 
 ---
 
-## 🖥️ Tech Stack
+## Tech Stack
 
 ### Backend
 | Layer | Technology |
@@ -28,7 +28,7 @@ The final and most complete version of the Student Information System — rebuil
 
 ---
 
-## ✨ Features
+## Features
 
 - **Student Management** — Full CRUDL with photo upload to Supabase
 - **Program Management** — Manage academic programs linked to colleges
@@ -42,7 +42,7 @@ The final and most complete version of the Student Information System — rebuil
 
 ---
 
-## 🗃️ Database Schema
+## Database Schema
 
 ### Student Table
 | Column | Type | Description |
@@ -70,7 +70,7 @@ The final and most complete version of the Student Information System — rebuil
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Python 3.x + Pipenv
@@ -119,7 +119,7 @@ Frontend runs on `http://localhost:3000`
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 webssis/
@@ -169,7 +169,7 @@ webssis/
 
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
 ### Backend `.env`
 ```env
@@ -188,7 +188,7 @@ REACT_APP_API_URL=http://localhost:5000
 
 ---
 
-## 📌 Notes
+## Notes
 
 - Student photos are stored in **Supabase Storage** — not locally
 - Database is pre-seeded with at least **300 students** and **30 programs**
@@ -198,6 +198,6 @@ REACT_APP_API_URL=http://localhost:5000
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Aeron Dale** — [@aeron-j](https://github.com/aeron-j)
